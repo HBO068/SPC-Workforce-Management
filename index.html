@@ -18,13 +18,13 @@
   --text:#0C1E2E;--text2:#3D5068;--text3:#7A90A8;
   --border:#CDD8E8;--border2:#B8C8DC;
   --r:7px;--r2:12px;
-  /* shift colours */
-  --cM:#00B050;--cA:#FFC000;--cN:#7030A0;--cADM:#D9D9D9;
-  --cCAL:#92D050;--cEL:#FF0000;--cSL:#FFCCCC;--cPH:#FF9900;
-  --cCP:#E2EFDA;--cBT:#BDD7EE;--cTRN:#DDEBF7;--cPAL:#C6EFCE;
-  --cDL:#404040;--cML:#FF66CC;--cBL:#FFB3DE;--cCCL:#CC99FF;
+  /* shift colours — matched to legend */
+  --cM:#00B050;--cA:#FFC000;--cN:#7030A0;--cADM:#D9D9D9;--cOff:#E8E8E8;
+  --cCAL:#00B050;--cPAL:#92D050;--cEL:#FF0066;--cSL:#FF9999;--cPH:#FF9900;
+  --cCP:#FFD700;--cBT:#4472C4;--cTRN:#00B0F0;--cCN:#C6EFCE;
+  --cDL:#595959;--cML:#FF66CC;--cBL:#FF99CC;--cCCL:#9966FF;
   --cABS:#FF0000;--cAA:#BFBFBF;--cSGL:#00B0A0;--cSD:#C00000;
-  --cSH:#4472C4;--cCL:#FFD700;--cOff:#F0F0F0;
+  --cSH:#FF6600;--cCL:#FF9900;--cCL2:#FFD700;
 }
 html,body{height:100%;overflow:hidden;font-family:'Inter',system-ui,sans-serif;font-size:12px;background:var(--bg);color:var(--text)}
 
@@ -135,15 +135,39 @@ tbody tr:hover td{background:var(--bg3)}
 /* shift pills */
 .sp{display:inline-block;border-radius:2px;font-size:8px;font-weight:700;min-width:22px;padding:1px 2px;text-align:center;cursor:pointer;line-height:1.5;transition:all .1s}
 .sp:hover{opacity:.75;transform:scale(1.15)}
-.sM{background:var(--cM);color:#fff}.sA{background:var(--cA);color:#222}.sN{background:var(--cN);color:#fff}
-.sADM{background:var(--cADM);color:#333}.sOff{background:var(--cOff);color:#AAA}.sO{background:transparent;color:#CCC;font-size:10px}
-.sCAL{background:var(--cCAL);color:#1A4A00}.sPAL{background:var(--cPAL);color:#1A4A00}.sEL{background:var(--cEL);color:#fff}
-.sSL{background:var(--cSL);color:#8B0000}.sPH{background:var(--cPH);color:#fff;font-weight:900}.sCP{background:var(--cCP);color:#1A4A00}
-.sBT{background:var(--cBT);color:#0D3A5C}.sTRN{background:var(--cTRN);color:#0D3A5C}.sDL{background:var(--cDL);color:#fff}
-.sML{background:var(--cML);color:#fff}.sBL{background:var(--cBL);color:#8B004A}.sCCL{background:var(--cCCL);color:#4B0082}
-.sABS{background:var(--cABS);color:#fff}.sAA{background:var(--cAA);color:#333}.sSGL{background:var(--cSGL);color:#fff}
-.sSD{background:var(--cSD);color:#fff}.sSH{background:var(--cSH);color:#fff}.sCL{background:var(--cCL);color:#333}
+/* Base */
+.sM{background:var(--cM);color:#fff}
+.sA{background:var(--cA);color:#222}
+.sN{background:var(--cN);color:#fff}
+.sADM{background:var(--cADM);color:#444}
+.sOff{background:var(--cOff);color:#888;border:1px solid #ccc}
+.sO{background:transparent;color:#CCC;font-size:10px}
+/* Leaves */
+.sCAL{background:var(--cCAL);color:#fff}
+.sPAL{background:var(--cPAL);color:#1A4A00}
+.sEL{background:var(--cEL);color:#fff}
+.sSL{background:var(--cSL);color:#8B0000}
+.sPH{background:var(--cPH);color:#fff;font-weight:900}
+.sCP{background:var(--cCP);color:#7A5A00}
+.sBT{background:var(--cBT);color:#fff}
+.sTRN{background:var(--cTRN);color:#fff}
+.sCN{background:var(--cCN);color:#1A4A00}
+.sDL{background:var(--cDL);color:#fff}
+.sML{background:var(--cML);color:#fff}
+.sBL{background:var(--cBL);color:#fff}
+.sCCL{background:var(--cCCL);color:#fff}
+.sABS{background:var(--cABS);color:#fff}
+.sAA{background:var(--cAA);color:#333}
+.sSGL{background:var(--cSGL);color:#fff}
+.sSD{background:var(--cSD);color:#fff}
+.sSH{background:var(--cSH);color:#fff}
+.sCL{background:var(--cCL);color:#333}
 .sxx{background:#E8EFF8;color:#334}
+/* Modifier overlays — /H darker, /C same, /L red tint */
+.mod-H{filter:brightness(0.72)}
+.mod-C{filter:brightness(0.88)}
+.mod-L{outline:2px solid #FF0000!important;outline-offset:-2px}
+.late-badge{font-size:7px;color:#FF0000;font-weight:900;vertical-align:super}
 
 /* ── EDIT POPUP ── */
 .ep{position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);box-shadow:0 8px 32px rgba(0,0,0,.2);padding:10px;display:none;min-width:240px}
@@ -366,16 +390,28 @@ tbody tr:hover td{background:var(--bg3)}
           <span class="li"><span class="ld sOff">Off</span>Off</span>
           <span class="lsep"></span>
           <span class="li"><span class="ld sCAL">CAL</span>Annual</span>
-          <span class="li"><span class="ld sPAL">PAL</span>Planned</span>
+          <span class="li"><span class="ld sPAL">PAL</span>Planned Annual</span>
           <span class="li"><span class="ld sEL">EL</span>Emergency</span>
           <span class="li"><span class="ld sSL">SL</span>Sick</span>
-          <span class="li"><span class="ld sPH">PH</span>Holiday</span>
-          <span class="li"><span class="ld sBT">BT</span>Business</span>
+          <span class="li"><span class="ld sPH">PH</span>Public Holiday</span>
+          <span class="li"><span class="ld sCP">CP</span>Compensation</span>
+          <span class="li"><span class="ld sBT">BT</span>Business Trip</span>
           <span class="li"><span class="ld sTRN">TRN</span>Training</span>
-          <span class="li"><span class="ld sML">ML</span>Maternity</span>
-          <span class="li"><span class="ld sBL">BL</span>Birth</span>
+          <span class="li"><span class="ld sCN">CN</span>Confinement</span>
           <span class="li"><span class="ld sDL">DL</span>Death</span>
-          <span class="li"><span class="ld sABS">ABS</span>Absent</span>
+          <span class="li"><span class="ld sML">ML</span>Marital</span>
+          <span class="li"><span class="ld sBL">BL</span>Birth</span>
+          <span class="li"><span class="ld sCCL">CCL</span>Circumcision</span>
+          <span class="li"><span class="ld sABS">ABS</span>Absence</span>
+          <span class="li"><span class="ld sAA">AA</span>Auth.Absence</span>
+          <span class="li"><span class="ld sSGL">SGL</span>Surgical</span>
+          <span class="li"><span class="ld sCL">CL</span>Cancel</span>
+          <span class="li"><span class="ld sSD">SD</span>Suspended</span>
+          <span class="li"><span class="ld sSH">SH</span>Sent Home</span>
+          <span class="lsep"></span>
+          <span class="li"><span class="ld sM mod-H">M</span>/H WFH</span>
+          <span class="li"><span class="ld sM mod-C">M</span>/C Comp</span>
+          <span class="li"><span class="ld sM mod-L">M</span>/L Late</span>
           <span class="lsep"></span>
           <span style="font-size:9px;color:#7A5000;background:#FFF8E8;padding:1px 7px;border-radius:8px;border:1px solid #F5D080">Click cell to edit · Click day header to toggle holiday</span>
         </div>
@@ -467,18 +503,45 @@ tbody tr:hover td{background:var(--bg3)}
 </div><!-- /app -->
 
 <!-- EDIT POPUP -->
-<div class="ep" id="editPopup">
+<div class="ep" id="editPopup" style="min-width:280px;max-width:320px">
   <div class="ep-title">
     <span id="epTitle">Edit shift</span>
     <span class="ep-close" onclick="closeEP()">✕</span>
   </div>
+  <!-- BASE -->
   <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.4px;margin-bottom:4px">Shift</div>
-  <div class="ep-grid" id="epBase"></div>
+  <div class="ep-grid" id="epBase" style="grid-template-columns:repeat(5,1fr)"></div>
+  <!-- MODIFIERS -->
+  <div class="ep-sec">Modifiers (click after selecting shift)</div>
+  <div style="display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap" id="epMods"></div>
+  <!-- LEAVE -->
   <div class="ep-sec">Leave / Absence</div>
-  <div class="ep-grid" id="epLeave"></div>
-  <div class="ep-custom">
-    <input type="text" id="epCustom" placeholder="Custom code e.g. M/C/H" style="text-transform:uppercase">
-    <button class="btn primary" style="height:24px;font-size:10px" onclick="applyCustom()">Apply</button>
+  <div class="ep-grid" id="epLeave" style="grid-template-columns:repeat(5,1fr)"></div>
+  <!-- CLEAR -->
+  <div style="margin-top:6px;border-top:1px solid var(--border);padding-top:6px;display:flex;gap:5px">
+    <button class="btn danger sm" style="flex:1" onclick="applyCode('Off')">✕ Clear / Off</button>
+    <input type="text" id="epCustom" placeholder="Custom e.g. M/H" style="flex:1;font-size:10px;height:24px;padding:0 6px;border:1px solid var(--border2);border-radius:4px;font-family:inherit;text-transform:uppercase">
+    <button class="btn primary sm" onclick="applyCustom()">Apply</button>
+  </div>
+</div>
+
+<!-- LATENESS MODAL -->
+<div class="mbg" id="modal-late">
+  <div class="modal" style="width:340px">
+    <h3>⏰ Record Lateness</h3>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:16px" id="late-label"></p>
+    <div class="fl">
+      <label class="lbl">Hours Late</label>
+      <input type="number" id="late-hours" min="0" max="8" step="0.5" placeholder="e.g. 1.5" style="width:100%">
+    </div>
+    <div class="fl">
+      <label class="lbl">Minutes Late</label>
+      <input type="number" id="late-minutes" min="0" max="59" placeholder="e.g. 30" style="width:100%">
+    </div>
+    <div class="ma">
+      <button class="btn" onclick="closeModal('modal-late')">Cancel</button>
+      <button class="btn primary" onclick="saveLate()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -664,7 +727,7 @@ document.getElementById('l-pass').addEventListener('keydown', e=>{ if(e.key==='E
 // LOAD
 // ══════════════════════════════════════
 async function loadAll(){
-  await Promise.all([loadPlanners(), loadShifts(), loadHolidays(workingYear)]);
+  await Promise.all([loadPlanners(), loadShifts(), loadHolidays(workingYear), loadLateHours()]);
   renderAll();
 }
 async function loadPlanners(){
@@ -957,24 +1020,66 @@ async function setRosterYear(y){
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS=['S','M','T','W','T','F','S'];
 const BASE_CODES  =['M','A','N','ADM','Off'];
-const LEAVE_CODES =['CAL','PAL','EL','SL','PH','CP','BT','TRN','ML','BL','DL','SGL','ABS','AA','CCL','CL','SD','SH'];
+const MOD_CODES   =['/H','/C','/L'];  // WFH, Compensation, Lateness
+const LEAVE_CODES =['CAL','PAL','EL','SL','PH','CP','BT','TRN','CN','DL','ML','BL','CCL','ABS','AA','SGL','CL','SD','SH'];
 
 function getShift(p, ds){
   return (SHIFTS[p.uid]||{})[ds]||'';
 }
 
+const PILL_MAP={M:'sM',A:'sA',N:'sN',ADM:'sADM',Off:'sOff',O:'sO',
+  CAL:'sCAL',PAL:'sPAL',EL:'sEL',SL:'sSL',PH:'sPH',CP:'sCP',
+  BT:'sBT',TRN:'sTRN',CN:'sCN',DL:'sDL',ML:'sML',BL:'sBL',CCL:'sCCL',
+  ABS:'sABS',AA:'sAA',SGL:'sSGL',CL:'sCL',SD:'sSD',SH:'sSH'};
+
 function pillCls(c){
   if(!c) return 'sO';
-  const map={M:'sM',A:'sA',N:'sN',ADM:'sADM',Off:'sOff',O:'sO',
-    CAL:'sCAL',PAL:'sPAL',EL:'sEL',SL:'sSL',PH:'sPH',CP:'sCP',
-    BT:'sBT',TRN:'sTRN',ML:'sML',BL:'sBL',DL:'sDL',SGL:'sSGL',
-    ABS:'sABS',AA:'sAA',CCL:'sCCL',CL:'sCL',SD:'sSD',SH:'sSH'};
-  const base=c.replace(/\/.*/,'');
-  return map[base]||'sxx';
+  const base=c.split('/')[0];
+  return PILL_MAP[base]||'sxx';
+}
+
+function modCls(c){
+  // returns extra CSS classes for modifiers
+  const parts=c.split('/').slice(1);
+  let cls='';
+  if(parts.includes('H')) cls+=' mod-H';
+  if(parts.includes('C')) cls+=' mod-C';
+  if(parts.includes('L')) cls+=' mod-L';
+  return cls;
+}
+
+// Build a pill HTML with modifier styling + late badge
+function makePill(code){
+  if(!code) return '';
+  const base=code.split('/')[0];
+  const mods=code.split('/').slice(1);
+  const baseCls=pillCls(code);
+  const modClass=modCls(code);
+  const lateInfo=mods.includes('L')&&LATE_HOURS[epCtx?.uid]?.[epCtx?.ds];
+  // For rendering in roster cells we use epCtx loosely, so just show badge if stored
+  const late='';
+  return `<span class="sp ${baseCls}${modClass}">${code}${late}</span>`;
+}
+
+// Render a roster cell pill (no epCtx needed here)
+function cellPill(code, uid, ds){
+  if(!code) return '';
+  const baseCls=pillCls(code);
+  const mods=code.split('/').slice(1);
+  let modClass='';
+  if(mods.includes('H')) modClass+=' mod-H';
+  if(mods.includes('C')) modClass+=' mod-C';
+  if(mods.includes('L')) modClass+=' mod-L';
+  let badge='';
+  if(mods.includes('L') && LATE_HOURS[uid] && LATE_HOURS[uid][ds]){
+    badge=`<span class="late-badge">${LATE_HOURS[uid][ds]}h</span>`;
+  }
+  return `<span class="sp ${baseCls}${modClass}">${code}</span>${badge}`;
 }
 
 function renderRoster(){
-  const sel  = parseInt(document.getElementById('r-month').value)||NaN;
+  const rawSel = document.getElementById('r-month').value;
+  const sel  = rawSel === 'all' ? NaN : parseInt(rawSel);
   const q    = (document.getElementById('r-search').value||'').toLowerCase();
   const stFil= document.getElementById('r-status').value;
   const y    = rosterYear;
@@ -1061,7 +1166,7 @@ function renderRoster(){
         const cellCls=(isPH?'ph-cell':isWe?'we-cell':'')+(d.getDate()===1?' ms':'');
         const code=getShift(p,ds);
         body+=`<td class="${cellCls}" onclick="openEP(this,'${p.uid}','${ds}')">`;
-        if(code) body+=`<span class="sp ${pillCls(code)}">${code}</span>`;
+        if(code) body+=cellPill(code,p.uid,ds);
         body+=`</td>`;
       });
       body+='</tr>';
@@ -1077,45 +1182,138 @@ document.getElementById('r-month').addEventListener('change', renderRoster);
 // ══════════════════════════════════════
 // SHIFT EDIT POPUP
 // ══════════════════════════════════════
-let epCtx={};
+let epCtx={base:'',mods:[]};
+let LATE_HOURS={};  // uid → { 'YYYY-MM-DD': '1.5' }
+
+async function loadLateHours(){
+  const s=await db.collection('late_hours').get().catch(()=>({docs:[]}));
+  LATE_HOURS={};
+  s.docs.forEach(d=>{ LATE_HOURS[d.id]=d.data(); });
+}
+
 function openEP(el,uid,ds){
-  epCtx={uid,ds};
   const p=PLANNERS.find(x=>x.uid===uid);
   const cur=p?getShift(p,ds):'';
-  document.getElementById('epTitle').textContent=`${uid} · ${ds}`;
+  // Parse current code into base + mods
+  const parts=cur.split('/');
+  epCtx={uid,ds,base:parts[0]||'',mods:parts.slice(1)};
+  document.getElementById('epTitle').textContent=`${p?.firstName||uid} · ${ds}`;
   document.getElementById('epCustom').value='';
-  document.getElementById('epBase').innerHTML=BASE_CODES.map(c=>
-    `<div class="ep-btn sp ${pillCls(c)}${c===cur?' sel':''}" onclick="applyCode('${c}')">${c}</div>`).join('');
-  document.getElementById('epLeave').innerHTML=LEAVE_CODES.map(c=>
-    `<div class="ep-btn sp ${pillCls(c)}${c===cur?' sel':''}" onclick="applyCode('${c}')">${c}</div>`).join('');
+  renderEP();
   const r=el.getBoundingClientRect();
   const ep=document.getElementById('editPopup');
-  ep.style.left=Math.min(r.left,window.innerWidth-260)+'px';
-  ep.style.top =Math.min(r.bottom+4,window.innerHeight-460)+'px';
+  const left=Math.min(r.left,window.innerWidth-330);
+  const top=Math.min(r.bottom+4,window.innerHeight-480);
+  ep.style.left=Math.max(4,left)+'px';
+  ep.style.top =Math.max(4,top)+'px';
   ep.classList.add('open');
 }
+
+function renderEP(){
+  const cur=epCtx.base;
+  const mods=epCtx.mods;
+  // Base buttons
+  document.getElementById('epBase').innerHTML=BASE_CODES.map(c=>{
+    const active=c===cur;
+    return `<div class="ep-btn sp ${PILL_MAP[c]||'sxx'}${active?' sel':''}" onclick="epSetBase('${c}')">${c}</div>`;
+  }).join('');
+  // Modifier buttons — only show when a base is selected and it's not Off
+  const showMods=cur&&cur!=='Off';
+  document.getElementById('epMods').innerHTML=showMods?MOD_CODES.map(m=>{
+    const key=m.replace('/','');
+    const active=mods.includes(key);
+    const label={H:'🏠/H WFH',C:'💰/C Comp',L:'⏰/L Late'}[key]||m;
+    return `<button class="btn sm${active?' primary':''}" onclick="epToggleMod('${key}')">${label}</button>`;
+  }).join(''):'<span style="font-size:10px;color:var(--text3);padding:2px">Select a shift first</span>';
+  // Leave buttons
+  document.getElementById('epLeave').innerHTML=LEAVE_CODES.map(c=>{
+    const active=c===cur;
+    return `<div class="ep-btn sp ${PILL_MAP[c]||'sxx'}${active?' sel':''}" onclick="epSetBase('${c}')">${c}</div>`;
+  }).join('');
+}
+
+function epSetBase(c){
+  if(c==='Off'){ applyCode('Off'); return; }
+  epCtx.base=c; epCtx.mods=[];
+  renderEP();
+  // Auto-save if no modifier needed
+  const code=buildCode();
+  saveShift(code);
+}
+
+function epToggleMod(key){
+  const idx=epCtx.mods.indexOf(key);
+  if(idx>=0) epCtx.mods.splice(idx,1); else epCtx.mods.push(key);
+  renderEP();
+  const code=buildCode();
+  if(key==='L' && epCtx.mods.includes('L')){
+    // Open lateness hours dialog
+    document.getElementById('late-label').textContent=
+      `${epCtx.base}/${key} — ${epCtx.uid} on ${epCtx.ds}`;
+    document.getElementById('late-hours').value='';
+    document.getElementById('late-minutes').value='';
+    openModal('modal-late');
+  } else {
+    saveShift(code);
+  }
+}
+
+function buildCode(){
+  if(!epCtx.base) return '';
+  if(!epCtx.mods.length) return epCtx.base;
+  return epCtx.base+'/'+epCtx.mods.join('/');
+}
+
+async function saveLate(){
+  const h=parseFloat(document.getElementById('late-hours').value)||0;
+  const m=parseInt(document.getElementById('late-minutes').value)||0;
+  const total=(h+(m/60)).toFixed(2);
+  if(!LATE_HOURS[epCtx.uid]) LATE_HOURS[epCtx.uid]={};
+  LATE_HOURS[epCtx.uid][epCtx.ds]=total;
+  try{
+    const upd={}; upd[epCtx.ds]=total;
+    await db.collection('late_hours').doc(epCtx.uid).set(upd,{merge:true});
+    toast(`Lateness recorded: ${total}h`);
+  }catch(e){ toast('Save error: '+e.message,'err'); }
+  closeModal('modal-late');
+  const code=buildCode();
+  await saveShift(code);
+}
+
 async function applyCode(code){
+  epCtx.base=code==='Off'?'Off':'';
+  epCtx.mods=[];
+  await saveShift(code);
+}
+
+async function saveShift(code){
   const p=PLANNERS.find(x=>x.uid===epCtx.uid);
-  if(!p){ closeEP(); return; }
+  if(!p) return;
   if(!SHIFTS[p.uid]) SHIFTS[p.uid]={};
-  if(code==='Off'||!code) delete SHIFTS[p.uid][epCtx.ds];
+  const isOff=!code||code==='Off';
+  if(isOff) delete SHIFTS[p.uid][epCtx.ds];
   else SHIFTS[p.uid][epCtx.ds]=code;
-  // Save to Firestore
   try{
     const upd={};
-    upd[epCtx.ds]=code==='Off'?firebase.firestore.FieldValue.delete():code;
+    upd[epCtx.ds]=isOff?firebase.firestore.FieldValue.delete():code;
     await db.collection('shifts').doc(p.uid).set(upd,{merge:true});
-  }catch(e){ toast('Save error: '+e.message,'err'); }
+  }catch(e){ toast('Save error: '+e.message,'err'); return; }
   closeEP(); renderRoster();
 }
+
 function applyCustom(){
   const v=document.getElementById('epCustom').value.trim().toUpperCase();
-  if(v) applyCode(v);
+  if(!v) return;
+  const parts=v.split('/');
+  epCtx.base=parts[0];
+  epCtx.mods=parts.slice(1);
+  saveShift(v);
 }
 function closeEP(){ document.getElementById('editPopup').classList.remove('open'); }
 document.addEventListener('click',e=>{
   const ep=document.getElementById('editPopup');
-  if(ep.classList.contains('open')&&!ep.contains(e.target)&&!e.target.closest('td')) closeEP();
+  const lm=document.getElementById('modal-late');
+  if(ep.classList.contains('open')&&!ep.contains(e.target)&&!e.target.closest('td')&&!lm.classList.contains('open')) closeEP();
 });
 
 // ══════════════════════════════════════
@@ -1298,7 +1496,7 @@ async function exportRosterCSV(){
 // ══════════════════════════════════════
 // INIT
 // ══════════════════════════════════════
-document.getElementById('r-month').value = new Date().getMonth();
+document.getElementById('r-month').value = 'all';
 renderYearTabs();
 </script>
 
