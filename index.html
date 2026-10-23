@@ -95,6 +95,8 @@ tbody tr:hover td{background:var(--bg3)}
 .pos-pcl{background:#3B1F5E;color:#D8B4FE}
 .pos-pln{background:#1F2937;color:#9CA3AF}
 .pos-oda{background:#1C3B3B;color:#5EEAD4}
+.pos-hcoe{background:#7C2D12;color:#FED7AA}
+.pos-da{background:#1E3A5F;color:#BAE6FD}
 .status-pill{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px}
 .s-active{background:#D1FAE5;color:#065F46}
 .s-resigned{background:#FEE2E2;color:#991B1B}
@@ -302,6 +304,14 @@ tbody tr:hover td{background:var(--bg3)}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
           Leave Tracker
         </div>
+        <div class="sb-item" id="nav-payroll" onclick="showPage('payroll');renderPayroll()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Payroll
+        </div>
+        <div class="sb-item" id="nav-organigram" onclick="showPage('organigram');renderOrganigram()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="4" rx="1"/><rect x="1" y="17" width="6" height="4" rx="1"/><rect x="9" y="17" width="6" height="4" rx="1"/><rect x="17" y="17" width="6" height="4" rx="1"/><path d="M12 6v4M4 17v-4h16v4"/></svg>
+          Organigram
+        </div>
       </div>
       <div class="sb-section">
         <div class="sb-lbl">System</div>
@@ -329,6 +339,8 @@ tbody tr:hover td{background:var(--bg3)}
               <option>Planning Supervisor</option>
               <option>Planning Capabilities Lead</option>
               <option>Planning Manager</option>
+              <option>Head of COE</option>
+              <option>Data Analyst</option>
             </select>
             <select id="p-status-fil" onchange="renderPlanners()">
               <option value="active">Active only</option>
@@ -348,6 +360,7 @@ tbody tr:hover td{background:var(--bg3)}
               <th style="width:170px">Position</th>
               <th style="width:100px">Contract</th>
               <th style="width:90px">Hire Date</th>
+              <th style="width:110px">Seniority</th>
               <th style="width:80px">Status</th>
               <th>Actions</th>
             </tr></thead>
@@ -469,6 +482,61 @@ tbody tr:hover td{background:var(--bg3)}
         </div>
       </div>
 
+      <!-- ══ PAYROLL PAGE ══ -->
+      <div class="page" id="page-payroll">
+        <div class="page-hdr">
+          <h2>Payroll Summary</h2>
+          <div class="filter-bar">
+            <select id="pay-year" onchange="renderPayroll()"></select>
+            <select id="pay-period" onchange="renderPayroll()">
+              <option value="year">Full Year</option>
+              <option value="period">Payroll Period (18→17)</option>
+            </select>
+            <select id="pay-month" onchange="renderPayroll()" style="display:none">
+              <option value="1">Jan 18 → Feb 17</option>
+              <option value="2">Feb 18 → Mar 17</option>
+              <option value="3">Mar 18 → Apr 17</option>
+              <option value="4">Apr 18 → May 17</option>
+              <option value="5">May 18 → Jun 17</option>
+              <option value="6">Jun 18 → Jul 17</option>
+              <option value="7">Jul 18 → Aug 17</option>
+              <option value="8">Aug 18 → Sep 17</option>
+              <option value="9">Sep 18 → Oct 17</option>
+              <option value="10">Oct 18 → Nov 17</option>
+              <option value="11">Nov 18 → Dec 17</option>
+              <option value="12">Dec 18 → Jan 17</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap" style="overflow-x:auto">
+          <table id="payroll-table">
+            <thead><tr>
+              <th style="width:70px">UID</th>
+              <th style="width:150px">Name</th>
+              <th style="width:70px">Work Days</th>
+              <th style="width:70px">Work Hrs</th>
+              <th style="width:50px">CAL</th>
+              <th style="width:50px">EL</th>
+              <th style="width:50px">SL</th>
+              <th style="width:70px">Other Leave</th>
+              <th style="width:70px">Late (hrs)</th>
+              <th style="width:50px">/C Count</th>
+              <th style="width:60px">CP Taken</th>
+              <th style="width:80px">CP Balance</th>
+            </tr></thead>
+            <tbody id="payroll-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ ORGANIGRAM PAGE ══ -->
+      <div class="page" id="page-organigram">
+        <div class="page-hdr">
+          <h2>Organigram</h2>
+        </div>
+        <div id="org-chart" style="padding:20px;overflow:auto"></div>
+      </div>
+
       <!-- ══ SETTINGS PAGE ══ -->
       <div class="page" id="page-settings">
         <div class="settings-wrap">
@@ -573,6 +641,8 @@ tbody tr:hover td{background:var(--bg3)}
           <option>Planning Supervisor</option>
           <option>Planning Capabilities Lead</option>
           <option>Planning Manager</option>
+          <option>Head of COE</option>
+          <option>Data Analyst</option>
         </select>
       </div>
       <div class="fl">
@@ -591,6 +661,34 @@ tbody tr:hover td{background:var(--bg3)}
       <div class="fl">
         <label class="lbl">Email</label>
         <input type="email" id="f-email" placeholder="name@company.com">
+      </div>
+      <div class="fl">
+        <label class="lbl">Job Level</label>
+        <select id="f-joblevel">
+          <option value="">— Select —</option>
+          <option value="L1">L1 — Planner</option>
+          <option value="L2">L2 — Senior Planner</option>
+          <option value="L3">L3 — Supervisor</option>
+          <option value="L4">L4 — Manager</option>
+          <option value="L5">L5 — Head / Lead</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label class="lbl">Reports To</label>
+        <select id="f-reportsto">
+          <option value="">— None —</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label class="lbl">Schedule Type</label>
+        <select id="f-schedtype">
+          <option value="shift">Shift (9-on / 3-off cycle)</option>
+          <option value="admin">Admin (standard hours)</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label class="lbl">Opening Leave Balance <span style="color:var(--text3);font-size:9px">(carry-over days)</span></label>
+        <input type="number" id="f-openbal" placeholder="0" step="0.5" min="0">
       </div>
     </div>
     <!-- Optional fields -->
@@ -795,6 +893,19 @@ function seniorityYears(hireDate){
   let h = hireDate.toDate ? hireDate.toDate() : new Date(hireDate+'T00:00:00');
   return (Date.now()-h.getTime())/(365.25*24*3600*1000);
 }
+function fmtSeniority(hireDate, exitDate){
+  if(!hireDate) return '—';
+  let h = hireDate.toDate ? hireDate.toDate() : new Date(hireDate+'T00:00:00');
+  let end = exitDate ? (exitDate.toDate ? exitDate.toDate() : new Date(exitDate+'T00:00:00')) : new Date();
+  let totalMonths = (end.getFullYear()-h.getFullYear())*12 + (end.getMonth()-h.getMonth());
+  if(end.getDate()<h.getDate()) totalMonths--;
+  if(totalMonths<0) totalMonths=0;
+  const yrs = Math.floor(totalMonths/12);
+  const mos = totalMonths%12;
+  const yPart = yrs===1 ? '1 Year' : yrs>1 ? yrs+' Years' : '0 Years';
+  const mPart = mos===1 ? '1 Month' : mos+' Months';
+  return yPart+' &amp; '+mPart;
+}
 function leaveRate(sen){ return sen>=5 ? (22.5/12) : 1.75; }
 function calcYTDGiven(p, year){
   const y = parseInt(year);
@@ -831,9 +942,9 @@ function calcTaken(uid, year){
   return n;
 }
 function posBadge(pos){
-  const m={'Planning Manager':'pos-pm','Planning Supervisor':'pos-sup','Planning Capabilities Lead':'pos-pcl','Operations Planner':'pos-pln'};
+  const m={'Planning Manager':'pos-pm','Planning Supervisor':'pos-sup','Planning Capabilities Lead':'pos-pcl','Operations Planner':'pos-pln','Head of COE':'pos-hcoe','Data Analyst':'pos-da'};
   const cls=m[pos]||'pos-pln';
-  const short={'Planning Capabilities Lead':'PCT Lead','Operations Planner':'OPS Planner','Planning Supervisor':'Supervisor','Planning Manager':'Manager'};
+  const short={'Planning Capabilities Lead':'PCT Lead','Operations Planner':'OPS Planner','Planning Supervisor':'Supervisor','Planning Manager':'Manager','Head of COE':'Head of COE','Data Analyst':'Data Analyst'};
   return `<span class="pos-badge ${cls}">${short[pos]||pos}</span>`;
 }
 function statusPill(status){
@@ -859,7 +970,7 @@ function renderPlanners(){
     return matchQ && matchPos && matchSt;
   });
   if(!list.length){
-    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No planners found</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No planners found</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(p=>{
@@ -872,6 +983,7 @@ function renderPlanners(){
       <td>${posBadge(p.position)}</td>
       <td style="font-size:11px;color:var(--text2)">${p.contractType||'—'}</td>
       <td style="font-size:11px;color:var(--text3)">${hireFmt}</td>
+      <td style="font-size:11px;color:var(--text2)">${fmtSeniority(p.hireDate, p.exitDate)}</td>
       <td>${statusPill(pst)}</td>
       <td style="white-space:nowrap">
         <button class="btn sm" onclick="editPlanner('${p.uid}')">Edit</button>
@@ -891,6 +1003,17 @@ function openAddPlanner(){
   document.getElementById('f-hire').value='';
   document.getElementById('f-pos').value='Operations Planner';
   document.getElementById('f-contract').value='CDI';
+  document.getElementById('f-joblevel').value='';
+  document.getElementById('f-schedtype').value='shift';
+  document.getElementById('f-openbal').value='';
+  // populate reports-to
+  const rs=document.getElementById('f-reportsto');
+  rs.innerHTML='<option value="">— None —</option>';
+  PLANNERS.filter(p=>(p.status||'active')==='active').forEach(p=>{
+    const o=document.createElement('option');
+    o.value=p.uid; o.textContent=`${p.firstName||''} ${p.lastName||''} (${p.uid})`;
+    rs.appendChild(o);
+  });
   openModal('modal-planner');
 }
 
@@ -915,6 +1038,18 @@ function editPlanner(uid){
   } else { document.getElementById('f-hire').value=''; }
   document.getElementById('f-pos').value      = p.position||'Operations Planner';
   document.getElementById('f-contract').value = p.contractType||'CDI';
+  document.getElementById('f-joblevel').value = p.jobLevel||'';
+  document.getElementById('f-schedtype').value= p.schedType||'shift';
+  document.getElementById('f-openbal').value  = p.openingBalance!=null ? p.openingBalance : '';
+  // populate reports-to
+  const rs=document.getElementById('f-reportsto');
+  rs.innerHTML='<option value="">— None —</option>';
+  PLANNERS.filter(x=>x.uid!==uid&&(x.status||'active')==='active').forEach(x=>{
+    const o=document.createElement('option');
+    o.value=x.uid; o.textContent=`${x.firstName||''} ${x.lastName||''} (${x.uid})`;
+    if(x.uid===p.reportsTo) o.selected=true;
+    rs.appendChild(o);
+  });
   openModal('modal-planner');
 }
 
@@ -925,20 +1060,25 @@ async function savePlanner(){
   const firstName = document.getElementById('f-first').value.trim();
   const lastName  = document.getElementById('f-last').value.trim();
   if(!firstName){ toast('First name is required','err'); return; }
+  const obVal = document.getElementById('f-openbal').value.trim();
   const data = {
     payrollId,
     uid,
     firstName,
     lastName,
-    position:     document.getElementById('f-pos').value,
-    contractType: document.getElementById('f-contract').value,
-    email:        document.getElementById('f-email').value.trim(),
-    phone:        document.getElementById('f-phone').value.trim(),
-    cin:          document.getElementById('f-cin').value.trim(),
-    teamsName:    document.getElementById('f-teams').value.trim(),
-    address:      document.getElementById('f-address').value.trim(),
-    status:       'active',
-    updatedAt:    new Date().toISOString(),
+    position:       document.getElementById('f-pos').value,
+    contractType:   document.getElementById('f-contract').value,
+    email:          document.getElementById('f-email').value.trim(),
+    phone:          document.getElementById('f-phone').value.trim(),
+    cin:            document.getElementById('f-cin').value.trim(),
+    teamsName:      document.getElementById('f-teams').value.trim(),
+    address:        document.getElementById('f-address').value.trim(),
+    jobLevel:       document.getElementById('f-joblevel').value,
+    reportsTo:      document.getElementById('f-reportsto').value,
+    schedType:      document.getElementById('f-schedtype').value,
+    openingBalance: obVal!=='' ? parseFloat(obVal) : 0,
+    status:         'active',
+    updatedAt:      new Date().toISOString(),
   };
   const hd = document.getElementById('f-hire').value;
   if(hd) data.hireDate = hd;
@@ -948,12 +1088,26 @@ async function savePlanner(){
     if(editingUID){
       const ex = PLANNERS.find(x=>x.uid===editingUID);
       if(!ex){ toast('Employee not found','err'); return; }
+      // Check if UID changed to something already taken
+      if(uid!==editingUID && PLANNERS.find(x=>x.uid===uid)){
+        toast('UID '+uid+' is already taken by another employee','err'); return;
+      }
+      // Check duplicate Payroll ID (excluding self)
+      if(payrollId && PLANNERS.find(x=>x.payrollId===payrollId && x.uid!==editingUID)){
+        toast('Payroll ID '+payrollId+' is already assigned to another employee','err'); return;
+      }
       await db.collection('planners').doc(ex._id).set(data, {merge:true});
       toast('Employee updated ✓');
     } else {
       // Check duplicate UID
-      const dup = PLANNERS.find(x=>x.uid===uid);
-      if(dup){ toast('UID '+uid+' already exists','err'); return; }
+      if(PLANNERS.find(x=>x.uid===uid)){
+        toast('UID '+uid+' already exists — each employee must have a unique UID','err'); return;
+      }
+      // Check duplicate Payroll ID
+      if(payrollId && PLANNERS.find(x=>x.payrollId===payrollId)){
+        toast('Payroll ID '+payrollId+' is already assigned to '+
+          (PLANNERS.find(x=>x.payrollId===payrollId)?.firstName||'another employee'),'err'); return;
+      }
       data.order = PLANNERS.length;
       data.createdAt = new Date().toISOString();
       await db.collection('planners').add(data);
@@ -1491,6 +1645,128 @@ async function exportRosterCSV(){
   if(!_dl) _dl=await window.claude?.use?.('downloads')??null;
   if(_dl){ try{ await _dl.save({filename:'SPC_Roster.csv',data:blob}); }catch(e){} }
   else { const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='SPC_Roster.csv';a.click();URL.revokeObjectURL(u); }
+}
+
+// ══════════════════════════════════════
+// PAYROLL
+// ══════════════════════════════════════
+(function initPayrollYear(){
+  const sel=document.getElementById('pay-year');
+  if(!sel) return;
+  const cur=new Date().getFullYear();
+  for(let y=cur;y>=2019;y--){
+    const o=document.createElement('option');
+    o.value=y; o.textContent=y; sel.appendChild(o);
+  }
+})();
+document.getElementById('pay-period')?.addEventListener('change',function(){
+  document.getElementById('pay-month').style.display=this.value==='period'?'':'none';
+  renderPayroll();
+});
+
+function payrollDateRange(year, period, month){
+  const y=parseInt(year);
+  if(period==='year') return {from:new Date(y,0,1), to:new Date(y,11,31)};
+  const m=parseInt(month);
+  // period = month 18 → next month 17
+  const from=new Date(y, m-1, 18);
+  let toYear=y, toMonth=m; // month 0-indexed
+  if(m===12){toYear=y+1;toMonth=1;} else {toMonth=m+1;}
+  const to=new Date(toYear, toMonth-1, 17);
+  return {from,to};
+}
+
+function renderPayroll(){
+  const year=document.getElementById('pay-year')?.value||(new Date().getFullYear()+'');
+  const period=document.getElementById('pay-period')?.value||'year';
+  const month=document.getElementById('pay-month')?.value||'1';
+  const {from,to}=payrollDateRange(year,period,month);
+  const tbody=document.getElementById('payroll-tbody');
+  if(!tbody) return;
+
+  const rows=PLANNERS.filter(p=>(p.status||'active')!=='').map(p=>{
+    const sh=SHIFTS[p.uid]||{};
+    let workDays=0,cal=0,el=0,sl=0,otherLeave=0,lateHrs=0,cCount=0,cpTaken=0;
+    const slDates=[];
+
+    for(const [dk,code] of Object.entries(sh)){
+      const d=new Date(dk+'T00:00:00');
+      if(d<from||d>to) continue;
+      const base=code.replace(/\/[HCL]$/,'');
+      const hasMod=code!==base;
+      const hasC=code.endsWith('/C');
+      if(['M','A','N','ADM'].includes(base)) workDays++;
+      if(base==='CAL') cal++;
+      if(base==='EL') el++;
+      if(base==='SL'){sl++;slDates.push(dk);}
+      if(['ML','DL','SGL','BL'].includes(base)) otherLeave++;
+      if(hasC) cCount++;
+      if(base==='CP') cpTaken++;
+      if(code.endsWith('/L')){
+        const lh=(LATE_HOURS[p.uid]||{})[dk];
+        if(lh && lh.hours) lateHrs+=parseFloat(lh.hours)||0;
+      }
+    }
+
+    // CP Balance: opening balance + /C count - CP taken
+    const cpBal=(p.openingBalance||0)+cCount-cpTaken;
+    const slTip=slDates.sort().join(', ')||'—';
+
+    return `<tr>
+      <td><span class="uid-badge">${p.uid}</span></td>
+      <td style="font-weight:600">${p.firstName||''} ${p.lastName||''}</td>
+      <td style="text-align:center">${workDays}</td>
+      <td style="text-align:center">${(workDays*8.5).toFixed(1)}</td>
+      <td style="text-align:center">${cal}</td>
+      <td style="text-align:center">${el}</td>
+      <td style="text-align:center;cursor:help" title="SL dates: ${slTip}">${sl}</td>
+      <td style="text-align:center">${otherLeave}</td>
+      <td style="text-align:center;color:${lateHrs>0?'#C8303A':'inherit'}">${lateHrs>0?lateHrs.toFixed(2):'—'}</td>
+      <td style="text-align:center">${cCount}</td>
+      <td style="text-align:center">${cpTaken}</td>
+      <td style="text-align:center;font-weight:700;color:${cpBal<0?'#C8303A':cpBal>0?'#166534':'inherit'}">${cpBal}</td>
+    </tr>`;
+  });
+  tbody.innerHTML=rows.join('')||`<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text3)">No data</td></tr>`;
+}
+
+// ══════════════════════════════════════
+// ORGANIGRAM
+// ══════════════════════════════════════
+function renderOrganigram(){
+  const el=document.getElementById('org-chart');
+  if(!el) return;
+  const active=PLANNERS.filter(p=>(p.status||'active')==='active');
+  if(!active.length){el.innerHTML='<p style="color:var(--text3);padding:20px">No employees to display.</p>';return;}
+
+  // Group by job level
+  const levels={'L5':[],'L4':[],'L3':[],'L2':[],'L1':[],'':[]};
+  active.forEach(p=>{ const l=p.jobLevel||''; (levels[l]||(levels[l]=[])).push(p); });
+
+  const levelLabels={'L5':'L5 — Head / Lead','L4':'L4 — Manager','L3':'L3 — Supervisor','L2':'L2 — Senior Planner','L1':'L1 — Planner','':'No Level'};
+  const orderedLevels=['L5','L4','L3','L2','L1',''];
+
+  let html='<div style="font-family:inherit">';
+  orderedLevels.forEach(lv=>{
+    const grp=levels[lv];
+    if(!grp||!grp.length) return;
+    html+=`<div style="margin-bottom:24px">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:4px">${levelLabels[lv]}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">`;
+    grp.forEach(p=>{
+      const mgr=active.find(x=>x.uid===p.reportsTo);
+      const mgrLabel=mgr?`Reports to: ${mgr.firstName||''} ${mgr.lastName||''}`:'No reporting line';
+      html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:160px;max-width:200px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${p.firstName||''} ${p.lastName||''}</div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:4px">${p.uid}</div>
+        <div style="margin-bottom:4px">${posBadge(p.position)}</div>
+        <div style="font-size:9px;color:var(--text3)">${mgrLabel}</div>
+      </div>`;
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
 }
 
 // ══════════════════════════════════════
