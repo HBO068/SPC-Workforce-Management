@@ -1,1707 +1,1296 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>SPC Workforce</title>
+<title>SPC Workforce Platform</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 
-<!-- Firebase SDKs -->
+<!-- Firebase -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
 
 <style>
-/* ── Layout: full-height shell, left nav + main panel ── */
-:root {
-  --bg:        #0b0f18;
-  --bg2:       #111827;
-  --bg3:       #1a2235;
-  --border:    #243048;
-  --fg:        #e8edf5;
-  --fg2:       #8b9bb8;
-  --fg3:       #4a5a78;
-  --accent:    #2f7ef5;
-  --accent-lo: #1a3a6e;
-  --success:   #22c55e;
-  --warn:      #f59e0b;
-  --danger:    #ef4444;
-  --shift-a:   #3b82f6;
-  --shift-m:   #10b981;
-  --shift-n:   #8b5cf6;
-  --shift-cal: #ef4444;
-  --shift-sl:  #f59e0b;
-  --shift-o:   #374151;
-  --shift-ph:  #06b6d4;
-  --shift-adm: #6366f1;
-  color-scheme: dark;
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0C1E2E;--navy2:#152338;--navy3:#1E3048;--navy4:#253A58;
+  --accent:#1AAF68;--accent2:#128750;
+  --amber:#F5A623;--red:#E8433A;--blue:#3B82F6;
+  --bg:#EEF2F7;--bg2:#FFFFFF;--bg3:#E4EAF3;
+  --text:#0C1E2E;--text2:#3D5068;--text3:#7A90A8;
+  --border:#CDD8E8;--border2:#B8C8DC;
+  --r:7px;--r2:12px;
+  /* shift colours */
+  --cM:#00B050;--cA:#FFC000;--cN:#7030A0;--cADM:#D9D9D9;
+  --cCAL:#92D050;--cEL:#FF0000;--cSL:#FFCCCC;--cPH:#FF9900;
+  --cCP:#E2EFDA;--cBT:#BDD7EE;--cTRN:#DDEBF7;--cPAL:#C6EFCE;
+  --cDL:#404040;--cML:#FF66CC;--cBL:#FFB3DE;--cCCL:#CC99FF;
+  --cABS:#FF0000;--cAA:#BFBFBF;--cSGL:#00B0A0;--cSD:#C00000;
+  --cSH:#4472C4;--cCL:#FFD700;--cOff:#F0F0F0;
 }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg:        #f0f4fc;
-    --bg2:       #ffffff;
-    --bg3:       #e4ebf7;
-    --border:    #c8d6ef;
-    --fg:        #0f1a30;
-    --fg2:       #4a5a78;
-    --fg3:       #8b9bb8;
-    --accent:    #1a5fd8;
-    --accent-lo: #dceafe;
-    color-scheme: light;
-  }
-}
-:root[data-theme="light"] {
-  --bg:#f0f4fc;--bg2:#ffffff;--bg3:#e4ebf7;--border:#c8d6ef;
-  --fg:#0f1a30;--fg2:#4a5a78;--fg3:#8b9bb8;--accent:#1a5fd8;--accent-lo:#dceafe;
-  color-scheme: light;
-}
+html,body{height:100%;overflow:hidden;font-family:'Inter',system-ui,sans-serif;font-size:12px;background:var(--bg);color:var(--text)}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--fg); font-size: 14px; }
+/* ── APP SHELL ── */
+.app{display:flex;flex-direction:column;height:100vh}
 
-/* ── App Shell ── */
-#login-screen {
-  position: fixed; inset: 0; background: var(--bg);
-  display: flex; align-items: center; justify-content: center; z-index: 100;
-}
-.login-card {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
-  padding: 48px 40px; width: min(420px, 90vw); text-align: center;
-}
-.login-logo { font-size: 13px; font-weight: 700; letter-spacing: .18em; color: var(--fg2); text-transform: uppercase; margin-bottom: 8px; }
-.login-card h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; color: var(--fg); }
-.login-card p { color: var(--fg2); margin-bottom: 32px; font-size: 13px; }
-.login-card input {
-  width: 100%; padding: 11px 14px; background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--fg); font-size: 14px; margin-bottom: 12px; outline: none;
-  transition: border-color .15s;
-}
-.login-card input:focus { border-color: var(--accent); }
-.login-card input::placeholder { color: var(--fg3); }
-.btn-primary {
-  width: 100%; padding: 12px; background: var(--accent); color: #fff;
-  border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
-  cursor: pointer; transition: opacity .15s;
-}
-.btn-primary:hover { opacity: .88; }
-.login-error { color: var(--danger); font-size: 12px; margin-top: 10px; min-height: 18px; }
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:200}
+.login-box{background:var(--bg2);border-radius:var(--r2);padding:40px;width:360px;text-align:center}
+.login-logo{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.login-box h1{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-box p{color:var(--text3);font-size:12px;margin-bottom:28px}
+.login-box input{width:100%;height:36px;padding:0 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;margin-bottom:10px;outline:none;font-family:inherit}
+.login-box input:focus{border-color:var(--accent)}
+.login-err{color:var(--red);font-size:11px;min-height:18px;margin-top:6px}
 
-#app { display: none; height: 100%; flex-direction: row; }
-#app.visible { display: flex; }
+/* ── TOPBAR ── */
+.topbar{height:48px;background:var(--navy);display:flex;align-items:center;gap:10px;padding:0 16px;flex-shrink:0;z-index:100}
+.logo{color:#fff;font-size:14px;font-weight:700}.logo span{color:var(--accent)}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
 
-/* ── Sidebar ── */
-#sidebar {
-  width: 220px; min-width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; overflow: hidden;
-}
-.sidebar-header {
-  padding: 20px 16px 16px; border-bottom: 1px solid var(--border);
-}
-.sidebar-logo { font-size: 11px; font-weight: 700; letter-spacing: .16em; color: var(--accent); text-transform: uppercase; }
-.sidebar-title { font-size: 16px; font-weight: 700; color: var(--fg); margin-top: 2px; }
-.sidebar-user { font-size: 12px; color: var(--fg2); margin-top: 4px; }
+/* ── SIDEBAR + CONTENT ── */
+.shell{display:flex;flex:1;overflow:hidden}
+.sidebar{width:200px;min-width:200px;background:var(--navy2);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sb-section{padding:12px 8px 4px}
+.sb-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--navy4);text-transform:uppercase;padding:0 8px;margin-bottom:4px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:#7A9BBF;font-size:12px;font-weight:500;transition:background .12s,color .12s}
+.sb-item:hover{background:var(--navy3);color:#ccc}
+.sb-item.active{background:var(--accent2);color:#fff}
+.sb-item svg{flex-shrink:0;opacity:.7}
+.sb-item.active svg{opacity:1}
+.sb-footer{margin-top:auto;padding:10px 8px;border-top:1px solid rgba(255,255,255,.06)}
+.sb-user{padding:6px 10px;font-size:10px;color:#4A6A8A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.nav-section { padding: 12px 8px 4px; }
-.nav-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--fg3); text-transform: uppercase; padding: 0 8px; margin-bottom: 4px; }
-.nav-item {
-  display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px;
-  cursor: pointer; color: var(--fg2); font-size: 13px; font-weight: 500;
-  transition: background .12s, color .12s; user-select: none;
-}
-.nav-item:hover { background: var(--bg3); color: var(--fg); }
-.nav-item.active { background: var(--accent-lo); color: var(--accent); }
-.nav-item svg { flex-shrink: 0; }
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.page{display:none;flex:1;flex-direction:column;overflow:hidden}
+.page.active{display:flex}
 
-.sidebar-footer {
-  margin-top: auto; padding: 12px 8px; border-top: 1px solid var(--border);
-}
-.logout-btn {
-  display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 8px;
-  cursor: pointer; color: var(--fg2); font-size: 13px; width: 100%;
-  background: none; border: none; transition: background .12s, color .12s;
-}
-.logout-btn:hover { background: var(--bg3); color: var(--danger); }
+/* ── BUTTONS ── */
+.btn{height:28px;padding:0 11px;font-size:11px;border-radius:var(--r);border:1px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit;white-space:nowrap;transition:background .12s}
+.btn:hover{background:var(--bg3)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent2);font-weight:600}
+.btn.primary:hover{background:var(--accent2)}
+.btn.danger{background:#FFF0F0;color:var(--red);border-color:#FFAAAA}
+.btn.danger:hover{background:#FFE0E0}
+.btn.amber{background:#FFF8E8;color:#9A6200;border-color:var(--amber)}
+.btn.navy{background:var(--navy3);color:#aaa;border-color:rgba(255,255,255,.1)}
+.btn.navy:hover{background:var(--navy4);color:#fff}
+.btn.sm{height:24px;font-size:10px;padding:0 8px}
 
-/* ── Main Content ── */
-#main {
-  flex: 1; overflow: hidden; display: flex; flex-direction: column;
-}
-.topbar {
-  height: 56px; background: var(--bg2); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0;
-}
-.topbar-title { font-size: 16px; font-weight: 700; flex: 1; }
-.topbar-actions { display: flex; gap: 8px; align-items: center; }
-.btn { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: opacity .15s; display: flex; align-items: center; gap: 6px; }
-.btn:hover { opacity: .85; }
-.btn-accent { background: var(--accent); color: #fff; }
-.btn-ghost { background: var(--bg3); color: var(--fg); border: 1px solid var(--border); }
-.btn-danger { background: var(--danger); color: #fff; }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
+/* ── PAGE HEADER ── */
+.page-hdr{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.page-hdr h2{font-size:14px;font-weight:700;flex:1}
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+select,input[type=text],input[type=date],input[type=email],input[type=tel]{height:28px;font-size:11px;padding:0 8px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);font-family:inherit;outline:none}
+select:focus,input:focus{border-color:var(--accent)}
 
-#content { flex: 1; overflow-y: auto; padding: 24px max(24px, env(safe-area-inset-right, 0px)) 24px max(24px, env(safe-area-inset-left, 0px)); }
+/* ── PLANNER TABLE ── */
+.tbl-wrap{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;text-align:left;white-space:nowrap;border-right:1px solid rgba(255,255,255,.07)}
+tbody td{padding:8px 10px;font-size:11px;border-bottom:1px solid var(--border);border-right:1px solid rgba(200,215,230,.3);vertical-align:middle}
+tbody tr:hover td{background:var(--bg3)}
+.uid-badge{font-family:monospace;font-size:11px;font-weight:700;color:var(--accent);background:#E8F7F0;padding:2px 6px;border-radius:4px}
+.pos-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.pos-pm{background:#1E3A5F;color:#93C5FD}
+.pos-sup{background:#1A3A2A;color:#86EFAC}
+.pos-pcl{background:#3B1F5E;color:#D8B4FE}
+.pos-pln{background:#1F2937;color:#9CA3AF}
+.pos-oda{background:#1C3B3B;color:#5EEAD4}
+.status-pill{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px}
+.s-active{background:#D1FAE5;color:#065F46}
+.s-resigned{background:#FEE2E2;color:#991B1B}
+.s-terminated{background:#FEF3C7;color:#92400E}
 
-/* ── Views ── */
-.view { display: none; }
-.view.active { display: block; }
+/* ── ROSTER ── */
+.roster-wrap{flex:1;overflow:auto}
+.roster-table{border-collapse:collapse;table-layout:fixed}
+.roster-table thead th{position:sticky;top:0;z-index:25;background:var(--navy);color:#fff;font-size:9px;font-weight:600;white-space:nowrap;border-right:1px solid rgba(255,255,255,.07);text-align:center}
+.roster-table thead th.sc{z-index:45}
+.roster-table thead tr.r2 th{top:24px;z-index:24;background:var(--navy2);font-size:9px;color:#6A8CA8;cursor:pointer}
+.roster-table thead tr.r2 th.sc{z-index:44}
+.roster-table thead tr.r2 th .di{padding:3px 1px;display:flex;flex-direction:column;align-items:center;line-height:1.2;font-size:8px;min-height:22px;justify-content:center}
+.roster-table thead tr.r2 th.we .di{background:rgba(245,166,35,.12);color:#B07A1A}
+.roster-table thead tr.r2 th.ph-day .di{background:rgba(255,153,0,.3);color:#7A5000}
+.th-inner{padding:5px 4px;display:flex;align-items:center;justify-content:center;min-height:24px}
+.th-left{justify-content:flex-start!important;padding-left:8px!important}
+.f0{position:sticky;left:0;z-index:15;width:26px;min-width:26px}
+.f1{position:sticky;left:26px;z-index:15;width:155px;min-width:155px}
+.f2{position:sticky;left:181px;z-index:15;width:44px;min-width:44px}
+.f3{position:sticky;left:225px;z-index:15;width:80px;min-width:80px;border-right:2px solid var(--border2)!important}
+.roster-table tbody td{padding:1px 2px;text-align:center;vertical-align:middle;background:var(--bg2);border-bottom:1px solid var(--border);border-right:1px solid rgba(200,210,220,.35);font-size:10px}
+.roster-table tbody td.sc{background:var(--bg2)}
+.roster-table tbody tr:hover td{background:#F0F5FF}
+.roster-table tbody tr:hover td.sc{background:#E8EFF8}
+.roster-table tbody tr.grp td{background:var(--navy3);color:#8AAABF;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:4px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.roster-table tbody tr.grp td.sc{background:var(--navy3)}
+.roster-table tbody tr.grp:hover td,.roster-table tbody tr.grp:hover td.sc{background:var(--navy3)}
+.grp-cnt{margin-left:6px;font-size:8px;background:rgba(255,255,255,.1);color:#7A9BBF;padding:1px 5px;border-radius:8px}
+.emp-cell{display:flex;flex-direction:column;gap:1px;padding:3px 7px;text-align:left}
+.emp-name{font-weight:600;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emp-meta{font-size:8px;color:var(--text3)}
+.we-cell{background:#FFFBF0!important}
+.ph-cell{background:#FFF0CC!important}
+.roster-table tbody tr:hover td.we-cell{background:#F5EDD0!important}
+.roster-table tbody tr:hover td.ph-cell{background:#FFE090!important}
+.ms{border-left:2px solid #4A7AAA!important}
+/* shift pills */
+.sp{display:inline-block;border-radius:2px;font-size:8px;font-weight:700;min-width:22px;padding:1px 2px;text-align:center;cursor:pointer;line-height:1.5;transition:all .1s}
+.sp:hover{opacity:.75;transform:scale(1.15)}
+.sM{background:var(--cM);color:#fff}.sA{background:var(--cA);color:#222}.sN{background:var(--cN);color:#fff}
+.sADM{background:var(--cADM);color:#333}.sOff{background:var(--cOff);color:#AAA}.sO{background:transparent;color:#CCC;font-size:10px}
+.sCAL{background:var(--cCAL);color:#1A4A00}.sPAL{background:var(--cPAL);color:#1A4A00}.sEL{background:var(--cEL);color:#fff}
+.sSL{background:var(--cSL);color:#8B0000}.sPH{background:var(--cPH);color:#fff;font-weight:900}.sCP{background:var(--cCP);color:#1A4A00}
+.sBT{background:var(--cBT);color:#0D3A5C}.sTRN{background:var(--cTRN);color:#0D3A5C}.sDL{background:var(--cDL);color:#fff}
+.sML{background:var(--cML);color:#fff}.sBL{background:var(--cBL);color:#8B004A}.sCCL{background:var(--cCCL);color:#4B0082}
+.sABS{background:var(--cABS);color:#fff}.sAA{background:var(--cAA);color:#333}.sSGL{background:var(--cSGL);color:#fff}
+.sSD{background:var(--cSD);color:#fff}.sSH{background:var(--cSH);color:#fff}.sCL{background:var(--cCL);color:#333}
+.sxx{background:#E8EFF8;color:#334}
 
-/* ── Stats Row ── */
-.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
-.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
-.stat-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg2); margin-bottom: 6px; }
-.stat-value { font-size: 28px; font-weight: 700; color: var(--fg); font-variant-numeric: tabular-nums; line-height: 1; }
-.stat-sub { font-size: 12px; color: var(--fg2); margin-top: 4px; }
+/* ── EDIT POPUP ── */
+.ep{position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);box-shadow:0 8px 32px rgba(0,0,0,.2);padding:10px;display:none;min-width:240px}
+.ep.open{display:block}
+.ep-title{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.ep-close{cursor:pointer;opacity:.5;font-size:14px}
+.ep-close:hover{opacity:1;color:var(--red)}
+.ep-sec{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.4px;margin:6px 0 3px;border-top:1px solid var(--border);padding-top:5px}
+.ep-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:2px}
+.ep-btn{font-size:9px;font-weight:700;padding:3px 2px;border-radius:3px;cursor:pointer;border:1.5px solid transparent;text-align:center}
+.ep-btn:hover{border-color:var(--border2);transform:scale(1.05)}
+.ep-btn.sel{outline:2px solid var(--navy);outline-offset:1px}
+.ep-custom{display:flex;gap:5px;margin-top:6px;border-top:1px solid var(--border);padding-top:6px}
+.ep-custom input{flex:1;font-size:10px;height:24px;padding:0 6px;border:1px solid var(--border2);border-radius:4px;font-family:inherit}
 
-/* ── Tables ── */
-.table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.table-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-.table-header h3 { font-size: 14px; font-weight: 600; }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-thead th { background: var(--bg3); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fg2); white-space: nowrap; }
-tbody tr { border-top: 1px solid var(--border); transition: background .1s; }
-tbody tr:hover { background: var(--bg3); }
-tbody td { padding: 11px 14px; font-size: 13px; color: var(--fg); }
-.table-overflow { overflow-x: auto; }
+/* ── MODAL ── */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.mbg.open{display:flex}
+.modal{background:var(--bg2);border-radius:var(--r2);padding:24px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{font-size:15px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.fl{margin-bottom:12px}
+.lbl{display:block;font-size:10px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+.fl input,.fl select,.fl textarea{width:100%;height:32px;padding:0 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;color:var(--text);background:var(--bg2)}
+.fl textarea{height:64px;padding:8px 10px;resize:vertical}
+.fl input:focus,.fl select:focus,.fl textarea:focus{outline:none;border-color:var(--accent)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.ma{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.opt-sep{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:10px 0 6px;border-top:1px solid var(--border);margin-top:6px}
 
-/* ── Shift badges ── */
-.shift { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 22px; border-radius: 4px; font-size: 11px; font-weight: 700; padding: 0 5px; }
-.s-A { background: #1d4ed8; color: #bfdbfe; }
-.s-M { background: #065f46; color: #a7f3d0; }
-.s-N { background: #4c1d95; color: #ddd6fe; }
-.s-CAL { background: #7f1d1d; color: #fecaca; }
-.s-EL  { background: #7f1d1d; color: #fecaca; }
-.s-SL  { background: #78350f; color: #fde68a; }
-.s-O  { background: #1f2937; color: #6b7280; border: 1px solid #374151; }
-.s-PH  { background: #164e63; color: #a5f3fc; }
-.s-ADM { background: #312e81; color: #c7d2fe; }
-.s-CP  { background: #713f12; color: #fef08a; }
-.s-CL  { background: #3f3f46; color: #d4d4d8; }
-.s-BT  { background: #134e4a; color: #99f6e4; }
+/* ── LEGEND ── */
+.legend{padding:5px 14px;background:var(--bg);border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:5px;align-items:center;flex-shrink:0;font-size:9px;color:var(--text3)}
+.li{display:inline-flex;align-items:center;gap:3px}
+.ld{width:20px;height:13px;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:700}
+.lsep{width:1px;height:10px;background:var(--border);margin:0 4px}
 
-/* ── Role badges ── */
-.role-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.role-pm    { background: #1e3a5f; color: #93c5fd; }
-.role-sup   { background: #1a3a2a; color: #86efac; }
-.role-pctl  { background: #3b1f5e; color: #d8b4fe; }
-.role-oda   { background: #1c3b3b; color: #5eead4; }
-.role-planner { background: #1f2937; color: #9ca3af; }
+/* ── SETTINGS ── */
+.settings-wrap{flex:1;overflow-y:auto;padding:24px}
+.settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:20px}
+.settings-card h3{font-size:13px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.ph-list-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);margin-bottom:6px}
+.ph-list-item .ph-date{font-size:10px;font-weight:700;color:var(--text2);min-width:90px}
+.ph-list-item .ph-name{flex:1;font-size:11px;font-weight:600}
+.ph-preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-bottom:12px}
+.ph-preset-btn{height:28px;padding:0 10px;font-size:10px;border-radius:var(--r);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .12s}
+.ph-preset-btn:hover{background:var(--bg3)}
+.ph-preset-btn.active{background:#D1FAE5;color:#065F46;border-color:#6EE7B7}
 
-/* ── Roster Grid ── */
-#roster-container { overflow-x: auto; }
-.roster-grid { min-width: 900px; }
-.roster-grid table thead th:first-child,
-.roster-grid table thead th:nth-child(2),
-.roster-grid table tbody td:first-child,
-.roster-grid table tbody td:nth-child(2) { position: sticky; background: var(--bg2); z-index: 2; }
-.roster-grid table thead th:first-child,
-.roster-grid table tbody td:first-child { left: 0; min-width: 160px; }
-.roster-grid table thead th:nth-child(2),
-.roster-grid table tbody td:nth-child(2) { left: 160px; min-width: 120px; }
-.roster-grid table thead th { position: sticky; top: 0; z-index: 1; }
-.roster-grid table thead th:first-child { z-index: 4; top: 0; }
-.roster-grid table thead th:nth-child(2) { z-index: 4; top: 0; }
-.day-cell { text-align: center; padding: 6px 4px !important; min-width: 38px; }
+/* ── TOAST ── */
+.toast{position:fixed;bottom:16px;right:16px;background:var(--navy);color:#fff;padding:9px 14px;border-radius:var(--r);font-size:11px;z-index:9999;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
 
-/* ── Modals ── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.modal-overlay[hidden] { display: none !important; }
-.modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; width: min(520px, 100%); max-height: 90vh; overflow-y: auto; }
-.modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.modal-header h3 { font-size: 16px; font-weight: 700; }
-.modal-close { background: none; border: none; color: var(--fg2); cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px; border-radius: 4px; }
-.modal-close:hover { color: var(--fg); background: var(--bg3); }
-.modal-body { padding: 20px 24px; }
-.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
-.form-group { margin-bottom: 16px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--fg2); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: .06em; }
-.form-input, .form-select {
-  width: 100%; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--fg); font-size: 14px; outline: none; transition: border-color .15s;
-}
-.form-input:focus, .form-select:focus { border-color: var(--accent); }
-.form-select option { background: var(--bg2); }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* ── PH BAR ── */
+.ph-bar{padding:4px 14px;background:#FFF8E8;border-bottom:1px solid #F5D080;flex-shrink:0;display:none;align-items:center;gap:6px;font-size:10px;color:#7A5000;flex-wrap:wrap;min-height:26px}
+.ph-tag{display:inline-flex;align-items:center;gap:3px;background:#FFE0A0;border:1px solid #F5C040;color:#7A5000;padding:1px 7px;border-radius:12px;font-size:10px;font-weight:600}
 
-/* ── Leave indicators ── */
-.leave-bar { height: 6px; border-radius: 3px; background: var(--bg3); margin-top: 4px; overflow: hidden; }
-.leave-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .3s; }
-.leave-fill.warn { background: var(--warn); }
-.leave-fill.danger { background: var(--danger); }
+/* ── STATS ── */
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.stat-c{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px}
+.stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:2px}
+.stat-val{font-size:18px;font-weight:700}
+.sv-g{color:var(--accent)}.sv-r{color:var(--red)}.sv-b{color:var(--blue)}.sv-a{color:var(--amber)}
 
-/* ── Search & Filters ── */
-.filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-.search-input { flex: 1; min-width: 200px; padding: 9px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); font-size: 13px; outline: none; }
-.search-input:focus { border-color: var(--accent); }
-.filter-select { padding: 9px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); font-size: 13px; outline: none; }
-.filter-select:focus { border-color: var(--accent); }
+/* ── FTE TURNAROUND page ── */
+.turnaround-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:20px;overflow-y:auto;flex:1}
+.tta-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px}
+.tta-name{font-weight:700;font-size:13px;margin-bottom:2px}
+.tta-uid{font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:10px}
+.tta-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)}
+.tta-row:last-child{border-bottom:none}
+.tta-lbl{color:var(--text2)}
+.tta-val{font-weight:600}
+.reason-pill{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:#FEE2E2;color:#991B1B}
 
-/* ── Month Roster ── */
-.month-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.month-nav button { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; color: var(--fg); cursor: pointer; font-size: 13px; }
-.month-nav button:hover { background: var(--bg3); }
-.month-label { font-size: 18px; font-weight: 700; flex: 1; }
+/* year select tabs */
+.year-tabs{display:flex;gap:4px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.year-tab{height:26px;padding:0 12px;font-size:11px;border-radius:var(--r);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit}
+.year-tab.active{background:var(--accent);color:#fff;border-color:var(--accent2);font-weight:600}
 
-/* ── Tabs ── */
-.tabs { display: flex; gap: 2px; background: var(--bg3); border-radius: 10px; padding: 3px; margin-bottom: 24px; width: fit-content; }
-.tab { padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--fg2); transition: background .12s, color .12s; }
-.tab.active { background: var(--bg2); color: var(--fg); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
-
-/* ── Upload zone ── */
-.upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
-.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-lo); }
-.upload-zone input { display: none; }
-.upload-icon { font-size: 32px; margin-bottom: 12px; }
-.upload-zone h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-.upload-zone p { font-size: 13px; color: var(--fg2); }
-
-/* ── Payroll table specifics ── */
-.payroll-total { font-weight: 700; color: var(--accent); }
-
-/* ── Empty state ── */
-.empty-state { text-align: center; padding: 60px 20px; }
-.empty-icon { font-size: 48px; margin-bottom: 16px; }
-.empty-state h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-.empty-state p { color: var(--fg2); font-size: 13px; }
-
-/* ── Toast ── */
-#toast {
-  position: fixed; bottom: 24px; right: 24px; background: var(--bg2);
-  border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px;
-  font-size: 13px; font-weight: 500; z-index: 200; opacity: 0;
-  transition: opacity .25s; pointer-events: none; max-width: 300px;
-}
-#toast.show { opacity: 1; }
-#toast.success { border-color: var(--success); color: var(--success); }
-#toast.error   { border-color: var(--danger);  color: var(--danger); }
-
-/* ── Hiring pipeline ── */
-.pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
-.pipeline-col { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-.pipeline-col h4 { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg2); margin-bottom: 12px; }
-.candidate-card { background: var(--bg3); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
-.candidate-card .name { font-size: 13px; font-weight: 600; }
-.candidate-card .meta { font-size: 11px; color: var(--fg2); margin-top: 3px; }
-.score-pill { display: inline-block; padding: 1px 7px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-top: 5px; }
-.score-h { background: #14532d; color: #86efac; }
-.score-m { background: #713f12; color: #fde68a; }
-.score-l { background: #7f1d1d; color: #fecaca; }
-
-/* ── Leave tracker ── */
-.leave-row { display: grid; grid-template-columns: 200px 1fr 1fr 1fr 1fr; gap: 16px; align-items: center; padding: 12px 20px; border-top: 1px solid var(--border); }
-.leave-row:first-child { border-top: none; }
-
-/* ── Workload ── */
-.workload-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-.workload-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
-.workload-card .wl-name { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
-.workload-card .wl-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-bottom: 4px; }
-.workload-card .wl-fill { height: 100%; border-radius: 2px; background: var(--accent); }
-.workload-card .wl-pct { font-size: 11px; color: var(--fg2); }
-
-/* ── Responsive ── */
-@media (max-width: 700px) {
-  #sidebar { display: none; }
-  .form-row { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
-}
+/* Resign/Term modal */
+.sep-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border);display:block}
 </style>
 
 <!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-card">
+<div id="loginScreen">
+  <div class="login-box">
     <div class="login-logo">SPC · Operations</div>
     <h1>Workforce Platform</h1>
-    <p>Sign in to continue to your dashboard</p>
-    <input type="email" id="login-email" placeholder="Email address" autocomplete="email">
-    <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
-    <button class="btn-primary" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="login-error"></div>
+    <p>Sign in to continue</p>
+    <input type="email" id="l-email" placeholder="Email address" autocomplete="email">
+    <input type="password" id="l-pass" placeholder="Password" autocomplete="current-password">
+    <button class="btn primary" style="width:100%;height:36px;font-size:13px;margin-top:4px" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="l-err"></div>
   </div>
 </div>
 
-<!-- APP SHELL -->
-<div id="app">
-  <!-- Sidebar -->
-  <nav id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">SPC · Ops</div>
-      <div class="sidebar-title">Workforce</div>
-      <div class="sidebar-user" id="sidebar-user">—</div>
+<div class="app" id="mainApp" style="display:none">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">SPC <span>Workforce</span></div>
+    <div class="topbar-right">
+      <span style="font-size:10px;color:#4A6A8A" id="top-user"></span>
+      <button class="btn navy sm" onclick="doLogout()">Sign out</button>
     </div>
+  </div>
 
-    <div class="nav-section">
-      <div class="nav-label">Overview</div>
-      <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Dashboard
-      </div>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-label">Roster</div>
-      <div class="nav-item" onclick="nav('planners')" id="nav-planners">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Planners
-      </div>
-      <div class="nav-item" onclick="nav('roster')" id="nav-roster">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Monthly Roster
-      </div>
-      <div class="nav-item" onclick="nav('upload')" id="nav-upload">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Teams Upload
-      </div>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-label">HR</div>
-      <div class="nav-item" onclick="nav('leaves')" id="nav-leaves">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-        Leave Tracker
-      </div>
-      <div class="nav-item" onclick="nav('payroll')" id="nav-payroll">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        Payroll
-      </div>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-label">Talent</div>
-      <div class="nav-item" onclick="nav('hiring')" id="nav-hiring">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Hiring Pipeline
-      </div>
-      <div class="nav-item" onclick="nav('workload')" id="nav-workload">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Workload Analysis
-      </div>
-    </div>
-
-    <div class="sidebar-footer">
-      <button class="logout-btn" onclick="doLogout()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Sign Out
-      </button>
-    </div>
-  </nav>
-
-  <!-- Main -->
-  <div id="main">
-    <div class="topbar">
-      <div class="topbar-title" id="topbar-title">Dashboard</div>
-      <div class="topbar-actions" id="topbar-actions"></div>
-    </div>
-    <div id="content">
-
-      <!-- DASHBOARD -->
-      <div class="view active" id="view-dashboard">
-        <div class="stats-row" id="dash-stats">
-          <div class="stat-card"><div class="stat-label">Active Planners</div><div class="stat-value" id="stat-planners">—</div><div class="stat-sub">in current roster</div></div>
-          <div class="stat-card"><div class="stat-label">On Leave Today</div><div class="stat-value" id="stat-onleave">—</div><div class="stat-sub">CAL / EL / SL</div></div>
-          <div class="stat-card"><div class="stat-label">Avg Leave Balance</div><div class="stat-value" id="stat-avgbal">—</div><div class="stat-sub">days remaining</div></div>
-          <div class="stat-card"><div class="stat-label">Open Positions</div><div class="stat-value" id="stat-open">—</div><div class="stat-sub">hiring pipeline</div></div>
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sb-section">
+        <div class="sb-lbl">Roster</div>
+        <div class="sb-item active" id="nav-planners" onclick="showPage('planners')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Planners
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0">
-          <div class="table-wrap">
-            <div class="table-header"><h3>Recent Activity</h3></div>
-            <div id="dash-activity" style="padding:12px 20px;color:var(--fg2);font-size:13px">Loading…</div>
-          </div>
-          <div class="table-wrap">
-            <div class="table-header"><h3>Shift Distribution Today</h3></div>
-            <div id="dash-shifts" style="padding:16px 20px"></div>
-          </div>
+        <div class="sb-item" id="nav-roster" onclick="showPage('roster')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Monthly Roster
+        </div>
+        <div class="sb-item" id="nav-upload" onclick="showPage('upload')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Teams Upload
         </div>
       </div>
-
-      <!-- PLANNERS -->
-      <div class="view" id="view-planners">
-        <div class="filter-bar">
-          <input class="search-input" placeholder="Search by name or UID…" id="planner-search" oninput="renderPlanners()">
-          <select class="filter-select" id="planner-pos" onchange="renderPlanners()">
-            <option value="">All Positions</option>
-            <option>Planning Manager</option>
-            <option>Supervisor</option>
-            <option>Planning Capabilities Training lead</option>
-            <option>Operations data Analyst</option>
-            <option>OPS Planner</option>
-          </select>
-          <select class="filter-select" id="planner-shift" onchange="renderPlanners()">
-            <option value="">All Shifts</option>
-            <option>A</option><option>B</option><option>C</option><option>D</option>
-            <option>Admin</option>
-          </select>
+      <div class="sb-section">
+        <div class="sb-lbl">Analytics</div>
+        <div class="sb-item" id="nav-turnaround" onclick="showPage('turnaround')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          FTE Turnaround
         </div>
-        <div class="table-wrap">
-          <div class="table-header">
-            <h3>Team Roster</h3>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-ghost btn-sm" onclick="exportPlannerCSV()">↓ Export</button>
-              <button class="btn btn-accent btn-sm" onclick="openAddPlanner()">+ Add Planner</button>
-            </div>
-          </div>
-          <div class="table-overflow">
-            <table>
-              <thead><tr>
-                <th>ID / UID</th><th>Name</th><th>Position</th><th>Shift</th>
-                <th>Hire Date</th><th>Seniority</th><th>Leave Balance</th><th>Actions</th>
-              </tr></thead>
-              <tbody id="planner-tbody"></tbody>
-            </table>
-          </div>
+        <div class="sb-item" id="nav-leaves" onclick="showPage('leaves')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          Leave Tracker
         </div>
       </div>
-
-      <!-- MONTHLY ROSTER -->
-      <div class="view" id="view-roster">
-        <div class="month-nav">
-          <button onclick="changeRosterMonth(-1)">‹</button>
-          <div class="month-label" id="roster-month-label"></div>
-          <button onclick="changeRosterMonth(1)">›</button>
-          <select class="filter-select" style="margin-left:auto" id="roster-year" onchange="renderRoster()">
-            <option>2021</option><option>2022</option><option>2023</option>
-            <option>2024</option><option>2025</option><option selected>2026</option>
-          </select>
-        </div>
-        <div id="roster-container">
-          <div class="table-wrap roster-grid">
-            <div class="table-overflow" id="roster-table-wrap">
-              <table id="roster-table">
-                <thead><tr id="roster-header"></tr></thead>
-                <tbody id="roster-tbody"></tbody>
-              </table>
-            </div>
-          </div>
+      <div class="sb-section">
+        <div class="sb-lbl">System</div>
+        <div class="sb-item" id="nav-settings" onclick="showPage('settings')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
         </div>
       </div>
-
-      <!-- TEAMS UPLOAD -->
-      <div class="view" id="view-upload">
-        <div class="table-wrap" style="margin-bottom:20px">
-          <div class="modal-body">
-            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('teams-file').click()">
-              <input type="file" id="teams-file" accept=".xlsx,.xls" onchange="handleTeamsUpload(event)">
-              <div class="upload-icon">📤</div>
-              <h4>Upload Teams Shifts Export</h4>
-              <p>Click or drag your ScheduleImportFormat_*.xlsx file here</p>
-            </div>
-            <div id="upload-status" style="margin-top:16px;display:none">
-              <div style="font-size:13px;color:var(--fg2);margin-bottom:8px" id="upload-status-text"></div>
-              <div id="upload-results"></div>
-            </div>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><h3>Upload History</h3></div>
-          <div class="table-overflow">
-            <table>
-              <thead><tr><th>Period</th><th>File</th><th>Cells Filled</th><th>Uploaded</th><th>By</th></tr></thead>
-              <tbody id="upload-history-tbody"><tr><td colspan="5" style="text-align:center;color:var(--fg2);padding:24px">No uploads yet</td></tr></tbody>
-            </table>
-          </div>
-        </div>
+      <div class="sb-footer">
+        <div class="sb-user" id="sb-user"></div>
       </div>
+    </nav>
 
-      <!-- LEAVE TRACKER -->
-      <div class="view" id="view-leaves">
-        <div class="tabs">
-          <div class="tab active" onclick="leaveTab('overview',this)">Overview</div>
-          <div class="tab" onclick="leaveTab('calculator',this)">New Joiner Calc</div>
-          <div class="tab" onclick="leaveTab('register',this)">Register Leave</div>
-        </div>
-        <div id="leave-overview">
+    <div class="main">
+
+      <!-- ══ PLANNERS PAGE ══ -->
+      <div class="page active" id="page-planners">
+        <div class="page-hdr">
+          <h2>Planners Registry</h2>
           <div class="filter-bar">
-            <input class="search-input" placeholder="Search planner…" id="leave-search" oninput="renderLeaveTable()">
-            <select class="filter-select" id="leave-year" onchange="renderLeaveTable()">
-              <option>2026</option><option>2025</option><option>2024</option>
+            <input type="text" id="p-search" placeholder="Search name / UID…" oninput="renderPlanners()" style="width:160px">
+            <select id="p-pos-fil" onchange="renderPlanners()">
+              <option value="">All Positions</option>
+              <option>Operations Planner</option>
+              <option>Planning Supervisor</option>
+              <option>Planning Capabilities Lead</option>
+              <option>Planning Manager</option>
+            </select>
+            <select id="p-status-fil" onchange="renderPlanners()">
+              <option value="active">Active only</option>
+              <option value="all">All</option>
+              <option value="resigned">Resigned</option>
+              <option value="terminated">Terminated</option>
             </select>
           </div>
-          <div class="table-wrap">
-            <div class="table-header"><h3>Leave Balances</h3><button class="btn btn-ghost btn-sm" onclick="exportLeaveCSV()">↓ Export</button></div>
-            <div class="table-overflow">
-              <table>
-                <thead><tr>
-                  <th>Name</th><th>Position</th><th>Hire Date</th><th>Entitlement/yr</th>
-                  <th>Given (YTD)</th><th>Taken (CAL/EL)</th><th>Balance</th><th>Bar</th>
-                </tr></thead>
-                <tbody id="leave-tbody"></tbody>
-              </table>
-            </div>
-          </div>
+          <button class="btn primary" onclick="openAddPlanner()">+ Add Planner</button>
         </div>
-        <div id="leave-calculator" hidden>
-          <div class="table-wrap" style="max-width:520px">
-            <div class="table-header"><h3>New Joiner Leave Calculator</h3></div>
-            <div class="modal-body">
-              <div class="form-group">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-input" id="calc-start" oninput="calcNewJoiner()">
-              </div>
-              <div id="calc-result" style="background:var(--bg3);border-radius:10px;padding:16px;display:none">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                  <div><div style="font-size:11px;color:var(--fg2);text-transform:uppercase;letter-spacing:.08em">Days in first month</div><div style="font-size:22px;font-weight:700;margin-top:4px" id="calc-days-first">—</div></div>
-                  <div><div style="font-size:11px;color:var(--fg2);text-transform:uppercase;letter-spacing:.08em">Months remaining</div><div style="font-size:22px;font-weight:700;margin-top:4px" id="calc-months">—</div></div>
-                  <div><div style="font-size:11px;color:var(--fg2);text-transform:uppercase;letter-spacing:.08em">First month credit</div><div style="font-size:22px;font-weight:700;margin-top:4px" id="calc-first-credit">—</div></div>
-                  <div><div style="font-size:11px;color:var(--fg2);text-transform:uppercase;letter-spacing:.08em">Full year leave</div><div style="font-size:22px;font-weight:700;margin-top:4px;color:var(--accent)" id="calc-total">—</div></div>
-                </div>
-                <div style="margin-top:12px;font-size:12px;color:var(--fg2)" id="calc-formula"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="leave-register" hidden>
-          <div class="table-wrap" style="max-width:520px">
-            <div class="table-header"><h3>Register Leave</h3></div>
-            <div class="modal-body">
-              <div class="form-group">
-                <label class="form-label">Planner</label>
-                <select class="form-select" id="reg-planner"></select>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">From</label>
-                  <input type="date" class="form-input" id="reg-from">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">To</label>
-                  <input type="date" class="form-input" id="reg-to">
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Type</label>
-                <select class="form-select" id="reg-type">
-                  <option value="CAL">CAL — Annual Leave</option>
-                  <option value="EL">EL — Exceptional Leave</option>
-                  <option value="SL">SL — Sick Leave</option>
-                  <option value="ML">ML — Maternity Leave</option>
-                  <option value="DL">DL — Death Leave</option>
-                  <option value="BL">BL — Birth Leave</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Notes</label>
-                <input type="text" class="form-input" id="reg-notes" placeholder="Optional">
-              </div>
-              <button class="btn btn-accent" onclick="registerLeave()">Register Leave</button>
-            </div>
-          </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:90px">Payroll ID</th>
+              <th style="width:70px">UID</th>
+              <th style="width:160px">Full Name</th>
+              <th style="width:170px">Position</th>
+              <th style="width:100px">Contract</th>
+              <th style="width:90px">Hire Date</th>
+              <th style="width:80px">Status</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="p-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- PAYROLL -->
-      <div class="view" id="view-payroll">
-        <div class="filter-bar">
-          <select class="filter-select" id="payroll-month" onchange="renderPayroll()">
-            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
-            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
-            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
-            <option value="10" selected>October</option><option value="11">November</option><option value="12">December</option>
+      <!-- ══ ROSTER PAGE ══ -->
+      <div class="page" id="page-roster">
+        <div class="page-hdr">
+          <h2>Monthly Roster</h2>
+          <div class="filter-bar">
+            <select id="r-month">
+              <option value="all">Full Year</option>
+              <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+              <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+              <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+            </select>
+            <input type="text" id="r-search" placeholder="Search…" oninput="renderRoster()" style="width:130px">
+            <select id="r-status" onchange="renderRoster()">
+              <option value="active">Active only</option>
+              <option value="all">All planners</option>
+            </select>
+          </div>
+          <button class="btn primary sm" onclick="exportRosterCSV()">↓ Export CSV</button>
+        </div>
+        <div class="year-tabs" id="year-tabs"></div>
+        <div class="ph-bar" id="ph-bar"></div>
+        <div id="r-stats" class="stats-bar" style="display:none"></div>
+        <div class="roster-wrap">
+          <table class="roster-table" id="rosterTable"></table>
+        </div>
+        <div class="legend">
+          <span class="li"><span class="ld sM">M</span>Morning</span>
+          <span class="li"><span class="ld sA">A</span>Afternoon</span>
+          <span class="li"><span class="ld sN">N</span>Night</span>
+          <span class="li"><span class="ld sADM" style="font-size:6px">ADM</span>Admin</span>
+          <span class="li"><span class="ld sOff">Off</span>Off</span>
+          <span class="lsep"></span>
+          <span class="li"><span class="ld sCAL">CAL</span>Annual</span>
+          <span class="li"><span class="ld sPAL">PAL</span>Planned</span>
+          <span class="li"><span class="ld sEL">EL</span>Emergency</span>
+          <span class="li"><span class="ld sSL">SL</span>Sick</span>
+          <span class="li"><span class="ld sPH">PH</span>Holiday</span>
+          <span class="li"><span class="ld sBT">BT</span>Business</span>
+          <span class="li"><span class="ld sTRN">TRN</span>Training</span>
+          <span class="li"><span class="ld sML">ML</span>Maternity</span>
+          <span class="li"><span class="ld sBL">BL</span>Birth</span>
+          <span class="li"><span class="ld sDL">DL</span>Death</span>
+          <span class="li"><span class="ld sABS">ABS</span>Absent</span>
+          <span class="lsep"></span>
+          <span style="font-size:9px;color:#7A5000;background:#FFF8E8;padding:1px 7px;border-radius:8px;border:1px solid #F5D080">Click cell to edit · Click day header to toggle holiday</span>
+        </div>
+      </div>
+
+      <!-- ══ UPLOAD PAGE ══ -->
+      <div class="page" id="page-upload">
+        <div class="page-hdr"><h2>Teams Shifts Upload</h2></div>
+        <div style="padding:24px;flex:1;overflow-y:auto">
+          <div style="background:var(--bg2);border:2px dashed var(--border2);border-radius:var(--r2);padding:40px;text-align:center;cursor:pointer;max-width:520px" onclick="document.getElementById('teamsFile').click()">
+            <input type="file" id="teamsFile" accept=".xlsx,.xls" style="display:none" onchange="handleTeamsUpload(event)">
+            <div style="font-size:32px;margin-bottom:12px">📤</div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:6px">Upload Teams Shifts Export</div>
+            <div style="color:var(--text3);font-size:11px">ScheduleImportFormat_*.xlsx</div>
+          </div>
+          <div id="upload-log" style="margin-top:16px;font-size:11px;color:var(--text2)"></div>
+        </div>
+      </div>
+
+      <!-- ══ FTE TURNAROUND PAGE ══ -->
+      <div class="page" id="page-turnaround">
+        <div class="page-hdr">
+          <h2>FTE Turnaround</h2>
+          <select id="tt-year" onchange="renderTurnaround()" style="width:80px">
+            <option>2021</option><option>2022</option><option>2023</option><option>2024</option><option>2025</option><option selected>2026</option>
           </select>
-          <select class="filter-select" id="payroll-year" onchange="renderPayroll()">
+          <select id="tt-type" onchange="renderTurnaround()">
+            <option value="">All types</option>
+            <option value="resigned">Resigned</option>
+            <option value="terminated">Terminated</option>
+          </select>
+        </div>
+        <div class="turnaround-grid" id="tt-grid">
+          <div style="text-align:center;padding:60px;color:var(--text3);grid-column:1/-1">No turnaround data yet. Mark planners as Resigned or Terminated to track reasons.</div>
+        </div>
+      </div>
+
+      <!-- ══ LEAVES PAGE ══ -->
+      <div class="page" id="page-leaves">
+        <div class="page-hdr">
+          <h2>Leave Tracker</h2>
+          <select id="lv-year" onchange="renderLeaves()" style="width:80px">
             <option>2024</option><option>2025</option><option selected>2026</option>
           </select>
-          <button class="btn btn-ghost" onclick="exportPayrollExcel()">↓ Export to Excel (HR Format)</button>
+          <input type="text" id="lv-search" placeholder="Search…" oninput="renderLeaves()" style="width:150px">
         </div>
-        <div class="tabs" id="payroll-tabs">
-          <div class="tab active" onclick="payrollTab('wd',this)">Working Days (WD)</div>
-          <div class="tab" onclick="payrollTab('wh',this)">Working Hours (WH)</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Name</th><th>UID</th><th>Position</th><th>Hire Date</th>
+              <th>Entitlement</th><th>YTD Accrued</th><th>Taken (CAL/EL)</th><th>Balance</th>
+            </tr></thead>
+            <tbody id="lv-tbody"></tbody>
+          </table>
         </div>
-        <div id="payroll-wd">
-          <div class="table-wrap">
-            <div class="table-overflow">
-              <table>
-                <thead><tr>
-                  <th>ID</th><th>UID</th><th>Name</th><th>Position</th>
-                  <th>Eff. WD</th><th>AL</th><th>ML/DL/BL/CSL</th><th>SL</th><th>LTI</th>
-                  <th>Suspension</th><th>Absence</th><th>Lateness</th><th>PH Off</th><th>Off</th><th>Total</th>
-                </tr></thead>
-                <tbody id="payroll-wd-tbody"></tbody>
-              </table>
+      </div>
+
+      <!-- ══ SETTINGS PAGE ══ -->
+      <div class="page" id="page-settings">
+        <div class="settings-wrap">
+          <!-- Year selector -->
+          <div class="settings-card">
+            <h3>📅 Working Year</h3>
+            <div style="display:flex;gap:10px;align-items:center">
+              <select id="set-year" onchange="changeWorkingYear(this.value)" style="width:100px">
+                <option>2021</option><option>2022</option><option>2023</option><option>2024</option><option>2025</option><option selected>2026</option>
+              </select>
+              <span style="font-size:11px;color:var(--text3)">Select the year to configure public holidays</span>
             </div>
           </div>
-        </div>
-        <div id="payroll-wh" hidden>
-          <div class="table-wrap">
-            <div class="table-overflow">
-              <table>
-                <thead><tr><th>ID</th><th>UID</th><th>Name</th><th>Position</th><th>Working Hours</th></tr></thead>
-                <tbody id="payroll-wh-tbody"></tbody>
-              </table>
+          <!-- Public Holidays -->
+          <div class="settings-card">
+            <h3>🕌 Public Holidays — <span id="ph-year-label">2026</span></h3>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:14px">Fixed Moroccan public holidays (click to toggle). Muslim dates must be added manually each year.</p>
+            <div class="ph-preset-grid" id="ph-presets"></div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:12px 0 8px">Add Custom / Muslim Holiday</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-end;flex-wrap:wrap">
+              <div class="fl" style="margin:0;flex:0 0 160px"><label class="lbl">Date</label><input type="date" id="ph-date" style="width:100%"></div>
+              <div class="fl" style="margin:0;flex:1;min-width:180px"><label class="lbl">Name</label><input type="text" id="ph-name" placeholder="e.g. Aïd Al-Fitr" style="width:100%"></div>
+              <button class="btn primary sm" onclick="addHoliday()">+ Add</button>
             </div>
+            <div id="ph-list"></div>
           </div>
         </div>
       </div>
 
-      <!-- HIRING -->
-      <div class="view" id="view-hiring">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-          <div class="tabs" style="margin-bottom:0">
-            <div class="tab active" onclick="hiringTab('pipeline',this)">Pipeline</div>
-            <div class="tab" onclick="hiringTab('scores',this)">Interview Scores</div>
-            <div class="tab" onclick="hiringTab('contracts',this)">Contracts</div>
-          </div>
-          <button class="btn btn-accent btn-sm" onclick="openAddCandidate()">+ Add Candidate</button>
-        </div>
-        <div id="hiring-pipeline">
-          <div class="pipeline" id="pipeline-board"></div>
-        </div>
-        <div id="hiring-scores" hidden>
-          <div class="table-wrap">
-            <div class="table-overflow">
-              <table>
-                <thead><tr><th>#</th><th>Name</th><th>English</th><th>Shift Availability</th><th>Company Knowledge</th><th>Skills</th><th>Soft Skills</th><th>Total</th><th>Outcome</th></tr></thead>
-                <tbody id="scores-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div id="hiring-contracts" hidden>
-          <div class="table-wrap">
-            <div class="table-overflow">
-              <table>
-                <thead><tr><th>UID</th><th>Name</th><th>Position</th><th>Contract Type</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
-                <tbody id="contracts-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- WORKLOAD -->
-      <div class="view" id="view-workload">
-        <div style="margin-bottom:20px">
-          <div class="table-wrap" style="max-width:600px;margin-bottom:20px">
-            <div class="modal-body">
-              <div class="upload-zone" onclick="document.getElementById('bi-file').click()">
-                <input type="file" id="bi-file" accept=".xlsx,.xls,.csv" onchange="handleBIUpload(event)">
-                <div class="upload-icon">📊</div>
-                <h4>Upload BI / Workload File</h4>
-                <p>Excel or CSV with planner IDs and workload metrics</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="workload-results">
-          <div class="empty-state">
-            <div class="empty-icon">📈</div>
-            <h3>No workload data yet</h3>
-            <p>Upload a BI file with planner IDs to see analysis here</p>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /content -->
-  </div><!-- /main -->
+    </div><!-- /main -->
+  </div><!-- /shell -->
 </div><!-- /app -->
 
-<!-- ADD PLANNER MODAL -->
-<div class="modal-overlay" id="modal-planner" hidden>
+<!-- EDIT POPUP -->
+<div class="ep" id="editPopup">
+  <div class="ep-title">
+    <span id="epTitle">Edit shift</span>
+    <span class="ep-close" onclick="closeEP()">✕</span>
+  </div>
+  <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.4px;margin-bottom:4px">Shift</div>
+  <div class="ep-grid" id="epBase"></div>
+  <div class="ep-sec">Leave / Absence</div>
+  <div class="ep-grid" id="epLeave"></div>
+  <div class="ep-custom">
+    <input type="text" id="epCustom" placeholder="Custom code e.g. M/C/H" style="text-transform:uppercase">
+    <button class="btn primary" style="height:24px;font-size:10px" onclick="applyCustom()">Apply</button>
+  </div>
+</div>
+
+<!-- ADD / EDIT PLANNER MODAL -->
+<div class="mbg" id="modal-planner">
   <div class="modal">
-    <div class="modal-header">
-      <h3 id="modal-planner-title">Add Planner</h3>
-      <button class="modal-close" onclick="closeModal('modal-planner')">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">ID (numeric)</label>
-          <input type="text" class="form-input" id="p-id" placeholder="00055">
-        </div>
-        <div class="form-group">
-          <label class="form-label">UID</label>
-          <input type="text" class="form-input" id="p-uid" placeholder="HBO068">
-        </div>
+    <h3 id="modal-planner-title">➕ Add Planner</h3>
+    <div class="fg2">
+      <div class="fl">
+        <label class="lbl">Payroll ID <span style="color:var(--text3)">(text, keeps leading zeros)</span></label>
+        <input id="f-payid" placeholder="e.g. 00480" style="font-family:monospace">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">First Name</label>
-          <input type="text" class="form-input" id="p-first">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Last Name</label>
-          <input type="text" class="form-input" id="p-last">
-        </div>
+      <div class="fl">
+        <label class="lbl">UID</label>
+        <input id="f-uid" placeholder="e.g. HBO068" style="font-family:monospace;text-transform:uppercase">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Position</label>
-          <select class="form-select" id="p-pos">
-            <option>Planning Manager</option>
-            <option>Supervisor</option>
-            <option>Planning Capabilities Training lead</option>
-            <option>Operations data Analyst</option>
-            <option>OPS Planner</option>
-            <option>OPS Planning Intern</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Shift</label>
-          <select class="form-select" id="p-shift">
-            <option>A</option><option>B</option><option>C</option><option>D</option><option>Admin</option>
-          </select>
-        </div>
+      <div class="fl">
+        <label class="lbl">First Name</label>
+        <input id="f-first">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Hire Date</label>
-          <input type="date" class="form-input" id="p-hire">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Department</label>
-          <input type="text" class="form-input" id="p-dept" value="Operations">
-        </div>
+      <div class="fl">
+        <label class="lbl">Last Name</label>
+        <input id="f-last">
       </div>
-      <div class="form-group">
-        <label class="form-label">Hub / Team</label>
-        <select class="form-select" id="p-hub">
-          <option></option>
-          <option>MAMED</option><option>OMSLL</option><option>EGPSD</option>
-          <option>MAPTM</option><option>NLRTM</option><option>EUGAT</option>
-          <option>MEGAT</option><option>WAGAT</option><option>ASIAGAT</option>
+      <div class="fl">
+        <label class="lbl">Position</label>
+        <select id="f-pos">
+          <option>Operations Planner</option>
+          <option>Planning Supervisor</option>
+          <option>Planning Capabilities Lead</option>
+          <option>Planning Manager</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Leave Balance Carry-over (days)</label>
-        <input type="number" class="form-input" id="p-balance" value="0" step="0.5">
+      <div class="fl">
+        <label class="lbl">Contract Type</label>
+        <select id="f-contract">
+          <option>CDI</option>
+          <option>CDD</option>
+          <option>Intérim</option>
+          <option>Stage / Intern</option>
+        </select>
+      </div>
+      <div class="fl">
+        <label class="lbl">Hire Date</label>
+        <input type="date" id="f-hire">
+      </div>
+      <div class="fl">
+        <label class="lbl">Email</label>
+        <input type="email" id="f-email" placeholder="name@company.com">
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-planner')">Cancel</button>
-      <button class="btn btn-accent" onclick="savePlanner()" id="save-planner-btn">Save</button>
+    <!-- Optional fields -->
+    <div class="opt-sep">Optional Information</div>
+    <div class="fg3">
+      <div class="fl">
+        <label class="lbl">Phone Number</label>
+        <input type="tel" id="f-phone" placeholder="+212 6…">
+      </div>
+      <div class="fl">
+        <label class="lbl">CIN</label>
+        <input id="f-cin" placeholder="AB123456">
+      </div>
+      <div class="fl">
+        <label class="lbl">Teams Name</label>
+        <input id="f-teams" placeholder="As in MS Teams">
+      </div>
+    </div>
+    <div class="fl">
+      <label class="lbl">Home Address</label>
+      <textarea id="f-address" placeholder="Optional"></textarea>
+    </div>
+    <div class="ma">
+      <button class="btn" onclick="closeModal('modal-planner')">Cancel</button>
+      <button class="btn primary" id="btn-save-planner" onclick="savePlanner()">Save Planner</button>
     </div>
   </div>
 </div>
 
-<!-- ADD CANDIDATE MODAL -->
-<div class="modal-overlay" id="modal-candidate" hidden>
-  <div class="modal">
-    <div class="modal-header">
-      <h3>Add Candidate</h3>
-      <button class="modal-close" onclick="closeModal('modal-candidate')">×</button>
+<!-- RESIGN / TERMINATE MODAL -->
+<div class="mbg" id="modal-exit">
+  <div class="modal" style="width:440px">
+    <h3 id="exit-modal-title">Register Exit</h3>
+    <div class="fl">
+      <label class="lbl">Exit Type</label>
+      <select id="exit-type">
+        <option value="resigned">Resignation</option>
+        <option value="terminated">Termination of Contract</option>
+      </select>
     </div>
-    <div class="modal-body">
-      <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="c-name"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Role Applied</label>
-          <select class="form-select" id="c-role">
-            <option>OPS Planner</option><option>Planning Academy</option><option>Supervisor</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Stage</label>
-          <select class="form-select" id="c-stage">
-            <option>Screening</option><option>Interview 1</option><option>Interview 2</option>
-            <option>Offer</option><option>Hired</option><option>Rejected</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label">English (1-3)</label><input type="number" class="form-input" id="c-english" min="1" max="3" value="2"></div>
-        <div class="form-group"><label class="form-label">Shift (1-3)</label><input type="number" class="form-input" id="c-shift-sc" min="1" max="3" value="2"></div>
-        <div class="form-group"><label class="form-label">Knowledge (1-3)</label><input type="number" class="form-input" id="c-know" min="1" max="3" value="2"></div>
-        <div class="form-group"><label class="form-label">Skills (1-3)</label><input type="number" class="form-input" id="c-skills" min="1" max="3" value="2"></div>
-        <div class="form-group"><label class="form-label">Soft Skills (1-3)</label><input type="number" class="form-input" id="c-soft" min="1" max="3" value="2"></div>
-        <div class="form-group"><label class="form-label">Learning (1-3)</label><input type="number" class="form-input" id="c-learn" min="1" max="3" value="2"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="c-notes"></div>
+    <div class="fl">
+      <label class="lbl">Exit Date</label>
+      <input type="date" id="exit-date">
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-candidate')">Cancel</button>
-      <button class="btn btn-accent" onclick="saveCandidate()">Save</button>
+    <div class="fl">
+      <label class="lbl">Reason</label>
+      <select id="exit-reason">
+        <option>Own Project</option>
+        <option>Salary &amp; Opportunities</option>
+        <option>Personal issues</option>
+        <option>Health issues</option>
+        <option>Mariage</option>
+        <option>Performance</option>
+        <option>Behavioural Issues</option>
+        <option>Contract End</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="fl">
+      <label class="lbl">Notes</label>
+      <textarea id="exit-notes" placeholder="Additional details…"></textarea>
+    </div>
+    <div class="ma">
+      <button class="btn" onclick="closeModal('modal-exit')">Cancel</button>
+      <button class="btn danger" onclick="saveExit()">Confirm Exit</button>
     </div>
   </div>
 </div>
 
-<div id="toast"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-// FIREBASE CONFIG
-// ══════════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyB_mJp2n5Z1cX1xSyFxY3JKpKaqBRLbNGE",
-  authDomain: "spc-workforce.firebaseapp.com",
-  projectId: "spc-workforce",
-  storageBucket: "spc-workforce.firebasestorage.app",
-  messagingSenderId: "1004864165868",
-  appId: "1:1004864165868:web:28ba144a452518d0bd92c9"
+// ══════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════
+const FC = {
+  apiKey:"AIzaSyB_mJp2n5Z1cX1xSyFxY3JKpKaqBRLbNGE",
+  authDomain:"spc-workforce.firebaseapp.com",
+  projectId:"spc-workforce",
+  storageBucket:"spc-workforce.firebasestorage.app",
+  messagingSenderId:"1004864165868",
+  appId:"1:1004864165868:web:28ba144a452518d0bd92c9"
 };
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(FC);
 const db   = firebase.firestore();
 const auth = firebase.auth();
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════
 // STATE
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════
 let currentUser = null;
-let planners    = [];
-let shifts      = {};  // uid -> { 'YYYY-MM-DD': 'A' }
-let candidates  = [];
-let leaves      = [];  // { uid, from, to, type, days }
-let contracts   = [];
+let PLANNERS = [];   // from Firestore
+let SHIFTS   = {};   // uid → { 'YYYY-MM-DD': code }
+let HOLIDAYS = {};   // 'YYYY-MM-DD' → name   (per year, stored in Firestore)
 
 let rosterYear  = 2026;
-let rosterMonth = new Date().getMonth(); // 0-indexed
+let workingYear = 2026;
 let editingUID  = null;
+let exitUID     = null;
 
-// ══════════════════════════════════════════════
+// downloads capability
+let _dl = null;
+(async()=>{ try{ _dl = await window.claude?.use?.('downloads')??null; }catch(e){} })();
+
+// ══════════════════════════════════════
 // AUTH
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════
 auth.onAuthStateChanged(u => {
-  if (u) {
+  if(u){
     currentUser = u;
-    document.getElementById('login-screen').hidden = true;
-    document.getElementById('app').classList.add('visible');
-    document.getElementById('sidebar-user').textContent = u.email;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    document.getElementById('top-user').textContent = u.email;
+    document.getElementById('sb-user').textContent  = u.email;
     loadAll();
   } else {
     currentUser = null;
-    document.getElementById('login-screen').hidden = false;
-    document.getElementById('app').classList.remove('visible');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
   }
 });
-
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-password').value;
-  const errEl = document.getElementById('login-error');
-  errEl.textContent = '';
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch(e) {
-    errEl.textContent = e.message.replace('Firebase: ','').replace(/\(.*\)/,'').trim();
-  }
+async function doLogin(){
+  const e = document.getElementById('l-email').value.trim();
+  const p = document.getElementById('l-pass').value;
+  const err = document.getElementById('l-err');
+  err.textContent = '';
+  try{ await auth.signInWithEmailAndPassword(e,p); }
+  catch(ex){ err.textContent = ex.message.replace('Firebase:','').replace(/\(.*\)/,'').trim(); }
 }
-async function doLogout() {
-  await auth.signOut();
-}
-document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+async function doLogout(){ await auth.signOut(); }
+document.getElementById('l-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
 
-// ══════════════════════════════════════════════
-// FIRESTORE LOAD
-// ══════════════════════════════════════════════
-async function loadAll() {
-  await Promise.all([loadPlanners(), loadShifts(), loadCandidates(), loadLeaves(), loadContracts()]);
-  updateDashboard();
+// ══════════════════════════════════════
+// LOAD
+// ══════════════════════════════════════
+async function loadAll(){
+  await Promise.all([loadPlanners(), loadShifts(), loadHolidays(workingYear)]);
+  renderAll();
+}
+async function loadPlanners(){
+  const s = await db.collection('planners').orderBy('order','asc').get().catch(()=>db.collection('planners').get());
+  PLANNERS = s.docs.map(d=>({_id:d.id,...d.data()}));
+}
+async function loadShifts(){
+  const s = await db.collection('shifts').get();
+  SHIFTS = {};
+  s.docs.forEach(d=>{ SHIFTS[d.id] = d.data(); });
+}
+async function loadHolidays(year){
+  const doc = await db.collection('settings').doc('holidays_'+year).get();
+  if(doc.exists){ HOLIDAYS = doc.data()||{}; }
+  else { HOLIDAYS = {}; }
+}
+
+function renderAll(){
   renderPlanners();
-  renderLeaveTable();
   renderRoster();
-  renderPayroll();
-  renderPipeline();
-  populateRegisterPlanner();
+  renderYearTabs();
+  renderSettingsHolidays();
+  renderLeaves();
+  renderTurnaround();
 }
 
-async function loadPlanners() {
-  const snap = await db.collection('planners').orderBy('order','asc').get().catch(()=>db.collection('planners').get());
-  planners = snap.docs.map(d=>({id:d.id,...d.data()}));
-}
-async function loadShifts() {
-  const snap = await db.collection('shifts').get();
-  shifts = {};
-  snap.docs.forEach(d=>{ shifts[d.id] = d.data(); });
-}
-async function loadCandidates() {
-  const snap = await db.collection('candidates').get();
-  candidates = snap.docs.map(d=>({id:d.id,...d.data()}));
-}
-async function loadLeaves() {
-  const snap = await db.collection('leaves').orderBy('from','desc').get().catch(()=>db.collection('leaves').get());
-  leaves = snap.docs.map(d=>({id:d.id,...d.data()}));
-}
-async function loadContracts() {
-  const snap = await db.collection('contracts').get();
-  contracts = snap.docs.map(d=>({id:d.id,...d.data()}));
-}
-
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════
 // NAVIGATION
-// ══════════════════════════════════════════════
-const viewTitles = {
-  dashboard:'Dashboard', planners:'Planners', roster:'Monthly Roster',
-  upload:'Teams Upload', leaves:'Leave Tracker', payroll:'Payroll',
-  hiring:'Hiring Pipeline', workload:'Workload Analysis'
-};
-function nav(id) {
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('view-'+id).classList.add('active');
+// ══════════════════════════════════════
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
   document.getElementById('nav-'+id)?.classList.add('active');
-  document.getElementById('topbar-title').textContent = viewTitles[id]||id;
-  try { location.hash = id; } catch(e){}
+  if(id==='roster') renderRoster();
+  if(id==='settings') renderSettingsHolidays();
+  if(id==='turnaround') renderTurnaround();
+  if(id==='leaves') renderLeaves();
 }
-// restore hash
-const initHash = (location.hash||'#dashboard').replace('#','');
-if (document.getElementById('nav-'+initHash)) setTimeout(()=>nav(initHash),50);
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════
 // HELPERS
-// ══════════════════════════════════════════════
-function toast(msg, type='success') {
+// ══════════════════════════════════════
+function toast(msg, type='ok'){
   const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'show '+type;
-  setTimeout(()=>el.className='', 3000);
+  el.textContent = msg;
+  el.className = 'toast show';
+  el.style.background = type==='err' ? '#C8303A' : type==='warn' ? '#9A6200' : '#0C1E2E';
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='toast',3000);
 }
-function closeModal(id) { document.getElementById(id).hidden = true; }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openModal(id){ document.getElementById(id).classList.add('open'); }
 
-function roleBadge(pos) {
-  const map = {
-    'Planning Manager':'role-pm','Supervisor':'role-sup',
-    'Planning Capabilities Training lead':'role-pctl',
-    'Operations data Analyst':'role-oda','OPS Planner':'role-planner'
-  };
-  const cls = map[pos]||'role-planner';
-  return `<span class="role-badge ${cls}">${(pos||'').replace('Planning Capabilities Training lead','PCT Lead').replace('Operations data Analyst','ODA')}</span>`;
+function fmtDate(d){
+  if(!d) return '—';
+  if(d && d.toDate) d = d.toDate();
+  if(typeof d==='string') d = new Date(d+'T00:00:00');
+  return d.toLocaleDateString('fr-MA',{day:'2-digit',month:'short',year:'numeric'});
 }
-function shiftBadge(s) {
-  if (!s) return '<span style="color:var(--fg3)">—</span>';
-  const c = `s-${s.replace(' ','')}`;
-  return `<span class="shift ${c}">${s}</span>`;
+function dateKey(d){ // Date → 'YYYY-MM-DD'
+  return d.toISOString().split('T')[0];
 }
-function fmtDate(d) {
-  if (!d) return '—';
-  if (d.toDate) d = d.toDate();
-  if (typeof d === 'string') d = new Date(d);
-  return d.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+function seniorityYears(hireDate){
+  if(!hireDate) return 0;
+  let h = hireDate.toDate ? hireDate.toDate() : new Date(hireDate+'T00:00:00');
+  return (Date.now()-h.getTime())/(365.25*24*3600*1000);
 }
-function seniority(hireDate) {
-  if (!hireDate) return 0;
-  let h = hireDate;
-  if (h.toDate) h = h.toDate();
-  if (typeof h === 'string') h = new Date(h);
-  const years = (Date.now() - h.getTime()) / (365.25*24*3600*1000);
-  return Math.round(years * 100) / 100;
-}
-function leaveRate(sen) { return sen >= 5 ? (22.5/12) : 1.75; }
-
-// Annual leave entitlement for a planner
-function calcAnnualEntitlement(p) {
-  const sen = seniority(p.hireDate);
-  return sen >= 5 ? 22.5 : 21;
-}
-
-// YTD accrual as of today
-function calcYTDGiven(p, year) {
-  const y = parseInt(year)||2026;
+function leaveRate(sen){ return sen>=5 ? (22.5/12) : 1.75; }
+function calcYTDGiven(p, year){
+  const y = parseInt(year);
   const today = new Date();
-  const todayYear = today.getFullYear();
-  const endDate = todayYear === y ? today : new Date(y, 11, 31);
-
-  let hireDate;
-  if (p.hireDate) {
-    hireDate = p.hireDate.toDate ? p.hireDate.toDate() : new Date(p.hireDate);
-  } else {
-    return 0;
-  }
-
-  const startOfYear = new Date(y, 0, 1);
-  const effectiveStart = hireDate > startOfYear ? hireDate : startOfYear;
-  if (effectiveStart > endDate) return 0;
-
-  const sen = seniority(p.hireDate);
+  const endDate = today.getFullYear()===y ? today : new Date(y,11,31);
+  let h = p.hireDate;
+  if(!h) return 0;
+  if(h.toDate) h = h.toDate(); else h = new Date(h+'T00:00:00');
+  const startOfYear = new Date(y,0,1);
+  const effectiveStart = h > startOfYear ? h : startOfYear;
+  if(effectiveStart > endDate) return 0;
+  const sen = seniorityYears(p.hireDate);
   const rate = leaveRate(sen);
-
-  // New joiner mid-year: partial first month + full months
   let total = 0;
   let cursor = new Date(effectiveStart);
-
-  // Days left in start month
-  const endOfStartMonth = new Date(cursor.getFullYear(), cursor.getMonth()+1, 0);
-  const daysInStartMonth = endOfStartMonth.getDate();
-  const daysLeft = daysInStartMonth - cursor.getDate() + 1;
-  total += rate * (daysLeft / 30);
-  cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1);
-
-  // Full months
-  while (cursor <= endDate && cursor.getFullYear() === y) {
-    const endOfMonth = new Date(cursor.getFullYear(), cursor.getMonth()+1, 0);
-    if (endOfMonth <= endDate) { total += rate; }
-    cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1);
+  const daysInMonth = new Date(cursor.getFullYear(),cursor.getMonth()+1,0).getDate();
+  const daysLeft = daysInMonth - cursor.getDate() + 1;
+  total += rate*(daysLeft/30);
+  cursor = new Date(cursor.getFullYear(),cursor.getMonth()+1,1);
+  while(cursor<=endDate && cursor.getFullYear()===y){
+    const eom = new Date(cursor.getFullYear(),cursor.getMonth()+1,0);
+    if(eom<=endDate) total += rate;
+    cursor = new Date(cursor.getFullYear(),cursor.getMonth()+1,1);
   }
-  return Math.round(total * 100) / 100;
+  return Math.round(total*100)/100;
+}
+function calcTaken(uid, year){
+  const y = parseInt(year);
+  const sh = SHIFTS[uid]||{};
+  let n=0;
+  for(const [d,v] of Object.entries(sh)){
+    if(d.startsWith(y+'') && (v==='CAL'||v==='EL')) n++;
+  }
+  return n;
+}
+function posBadge(pos){
+  const m={'Planning Manager':'pos-pm','Planning Supervisor':'pos-sup','Planning Capabilities Lead':'pos-pcl','Operations Planner':'pos-pln'};
+  const cls=m[pos]||'pos-pln';
+  const short={'Planning Capabilities Lead':'PCT Lead','Operations Planner':'OPS Planner','Planning Supervisor':'Supervisor','Planning Manager':'Manager'};
+  return `<span class="pos-badge ${cls}">${short[pos]||pos}</span>`;
+}
+function statusPill(status){
+  const m={active:'s-active',resigned:'s-resigned',terminated:'s-terminated'};
+  const l={active:'Active',resigned:'Resigned',terminated:'Terminated'};
+  return `<span class="status-pill ${m[status]||'s-active'}">${l[status]||'Active'}</span>`;
 }
 
-// Days taken (CAL or EL) in a year from shift data
-function calcTakenLeave(uid, year) {
-  const y = parseInt(year)||2026;
-  const sh = shifts[uid] || {};
-  let count = 0;
-  for (const [d, v] of Object.entries(sh)) {
-    if (d.startsWith(y+'') && (v==='CAL'||v==='EL')) count++;
-  }
-  // Also from leaves collection
-  for (const l of leaves) {
-    if (l.uid !== uid) continue;
-    if ((l.type==='CAL'||l.type==='EL') && l.from && l.from.startsWith(y+'')) {
-      count += l.days || 0;
-    }
-  }
-  return count;
-}
-
-// ══════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════
-function updateDashboard() {
-  document.getElementById('stat-planners').textContent = planners.length;
-
-  const today = new Date().toISOString().split('T')[0];
-  let onLeave = 0;
-  planners.forEach(p => {
-    const s = (shifts[p.uid]||{})[today]||'';
-    if (s==='CAL'||s==='EL'||s==='SL') onLeave++;
-  });
-  document.getElementById('stat-onleave').textContent = onLeave;
-
-  let totalBal = 0;
-  planners.forEach(p => {
-    const given  = calcYTDGiven(p, 2026);
-    const taken  = calcTakenLeave(p.uid, 2026);
-    totalBal += Math.max(0, given - taken + (p.carryOver||0));
-  });
-  document.getElementById('stat-avgbal').textContent = planners.length ? (totalBal/planners.length).toFixed(1) : '—';
-  document.getElementById('stat-open').textContent = candidates.filter(c=>!['Hired','Rejected'].includes(c.stage)).length;
-
-  // Shift distribution
-  const shiftCounts = {};
-  planners.forEach(p => {
-    const s = (shifts[p.uid]||{})[today]||'Off';
-    shiftCounts[s] = (shiftCounts[s]||0)+1;
-  });
-  const shiftEl = document.getElementById('dash-shifts');
-  shiftEl.innerHTML = Object.entries(shiftCounts).sort((a,b)=>b[1]-a[1]).map(([s,n])=>
-    `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      ${shiftBadge(s)}
-      <div style="flex:1;height:8px;background:var(--bg3);border-radius:4px">
-        <div style="height:100%;width:${Math.round(n/planners.length*100)}%;background:var(--accent);border-radius:4px"></div>
-      </div>
-      <span style="font-size:12px;color:var(--fg2);min-width:24px;text-align:right">${n}</span>
-    </div>`
-  ).join('');
-
-  document.getElementById('dash-activity').innerHTML = `<span style="color:var(--fg2)">Platform loaded · ${planners.length} planners · ${Object.keys(shifts).length} shift records</span>`;
-}
-
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════
 // PLANNERS
-// ══════════════════════════════════════════════
-function renderPlanners() {
-  const q = document.getElementById('planner-search').value.toLowerCase();
-  const pos = document.getElementById('planner-pos').value;
-  const sh  = document.getElementById('planner-shift').value;
-  const tbody = document.getElementById('planner-tbody');
-  const filtered = planners.filter(p =>
-    (!q || (p.firstName+' '+p.lastName+' '+p.uid).toLowerCase().includes(q)) &&
-    (!pos || p.position===pos) &&
-    (!sh || p.shift===sh)
-  );
-  if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--fg2)">No planners found</td></tr>`;
+// ══════════════════════════════════════
+function renderPlanners(){
+  const q   = (document.getElementById('p-search').value||'').toLowerCase();
+  const pos = document.getElementById('p-pos-fil').value;
+  const st  = document.getElementById('p-status-fil').value;
+  const tbody = document.getElementById('p-tbody');
+  const list = PLANNERS.filter(p=>{
+    const name = ((p.firstName||'')+(p.lastName||'')+(p.uid||'')).toLowerCase();
+    const matchQ   = !q || name.includes(q) || (p.payrollId||'').toLowerCase().includes(q);
+    const matchPos = !pos || p.position===pos;
+    const pst = p.status||'active';
+    const matchSt  = st==='all' ? true : pst===st;
+    return matchQ && matchPos && matchSt;
+  });
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No planners found</td></tr>`;
     return;
   }
-  tbody.innerHTML = filtered.map(p => {
-    const sen = seniority(p.hireDate);
-    const given = calcYTDGiven(p, 2026);
-    const taken = calcTakenLeave(p.uid, 2026);
-    const bal   = Math.max(0, given - taken + (p.carryOver||0));
+  tbody.innerHTML = list.map(p=>{
+    const pst = p.status||'active';
+    const hireFmt = fmtDate(p.hireDate);
     return `<tr>
-      <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg2)">${p.numId||'—'}</span><br>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">${p.uid||'—'}</span></td>
+      <td style="font-family:monospace;font-weight:700">${p.payrollId||'—'}</td>
+      <td><span class="uid-badge">${p.uid||'—'}</span></td>
       <td style="font-weight:600">${p.firstName||''} ${p.lastName||''}</td>
-      <td>${roleBadge(p.position)}</td>
-      <td>${shiftBadge(p.shift)}</td>
-      <td style="font-size:12px;color:var(--fg2)">${fmtDate(p.hireDate)}</td>
-      <td style="font-size:12px">${sen.toFixed(1)} yrs</td>
-      <td>
-        <span style="font-weight:600;color:${bal<3?'var(--danger)':bal<7?'var(--warn)':'var(--success)'}">${bal.toFixed(1)}d</span>
-        <div class="leave-bar" style="width:80px">
-          <div class="leave-fill ${bal<3?'danger':bal<7?'warn':''}" style="width:${Math.min(100,bal/21*100)}%"></div>
-        </div>
-      </td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="editPlanner('${p.uid}')">Edit</button>
-        <button class="btn btn-sm" style="background:var(--accent-lo);color:var(--accent)" onclick="viewPlannerLeaves('${p.uid}')">Leaves</button>
+      <td>${posBadge(p.position)}</td>
+      <td style="font-size:11px;color:var(--text2)">${p.contractType||'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${hireFmt}</td>
+      <td>${statusPill(pst)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn sm" onclick="editPlanner('${p.uid}')">Edit</button>
+        ${pst==='active'?`<button class="btn sm danger" onclick="openExit('${p.uid}')">Exit</button>`:''}
       </td>
     </tr>`;
   }).join('');
 }
 
-function openAddPlanner() {
-  editingUID = null;
-  document.getElementById('modal-planner-title').textContent = 'Add Planner';
-  ['p-id','p-uid','p-first','p-last'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('p-dept').value = 'Operations';
-  document.getElementById('p-balance').value = '0';
-  document.getElementById('p-hire').value = '';
-  document.getElementById('modal-planner').hidden = false;
+function openAddPlanner(){
+  editingUID=null;
+  document.getElementById('modal-planner-title').textContent='➕ Add Planner';
+  document.getElementById('btn-save-planner').textContent='Save Planner';
+  ['f-payid','f-uid','f-first','f-last','f-email','f-phone','f-cin','f-teams','f-address'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('f-hire').value='';
+  document.getElementById('f-pos').value='Operations Planner';
+  document.getElementById('f-contract').value='CDI';
+  openModal('modal-planner');
 }
 
-function editPlanner(uid) {
-  const p = planners.find(x=>x.uid===uid);
-  if (!p) return;
-  editingUID = uid;
-  document.getElementById('modal-planner-title').textContent = 'Edit Planner';
-  document.getElementById('p-id').value    = p.numId||'';
-  document.getElementById('p-uid').value   = uid;
-  document.getElementById('p-first').value = p.firstName||'';
-  document.getElementById('p-last').value  = p.lastName||'';
-  document.getElementById('p-pos').value   = p.position||'OPS Planner';
-  document.getElementById('p-shift').value = p.shift||'A';
-  document.getElementById('p-dept').value  = p.department||'Operations';
-  document.getElementById('p-hub').value   = p.hub||'';
-  document.getElementById('p-balance').value = p.carryOver||0;
-  if (p.hireDate) {
-    let d = p.hireDate.toDate ? p.hireDate.toDate() : new Date(p.hireDate);
-    document.getElementById('p-hire').value = d.toISOString().split('T')[0];
-  }
-  document.getElementById('modal-planner').hidden = false;
+function editPlanner(uid){
+  const p = PLANNERS.find(x=>x.uid===uid);
+  if(!p) return;
+  editingUID=uid;
+  document.getElementById('modal-planner-title').textContent='✏️ Edit Planner';
+  document.getElementById('btn-save-planner').textContent='Update';
+  document.getElementById('f-payid').value  = p.payrollId||'';
+  document.getElementById('f-uid').value    = uid;
+  document.getElementById('f-first').value  = p.firstName||'';
+  document.getElementById('f-last').value   = p.lastName||'';
+  document.getElementById('f-email').value  = p.email||'';
+  document.getElementById('f-phone').value  = p.phone||'';
+  document.getElementById('f-cin').value    = p.cin||'';
+  document.getElementById('f-teams').value  = p.teamsName||'';
+  document.getElementById('f-address').value= p.address||'';
+  if(p.hireDate){
+    let d=p.hireDate.toDate?p.hireDate.toDate():new Date(p.hireDate+'T00:00:00');
+    document.getElementById('f-hire').value = d.toISOString().split('T')[0];
+  } else { document.getElementById('f-hire').value=''; }
+  document.getElementById('f-pos').value      = p.position||'Operations Planner';
+  document.getElementById('f-contract').value = p.contractType||'CDI';
+  openModal('modal-planner');
 }
 
-async function savePlanner() {
-  const uid = document.getElementById('p-uid').value.trim().toUpperCase();
-  if (!uid) return toast('UID is required','error');
+async function savePlanner(){
+  const uid = (document.getElementById('f-uid').value.trim()).toUpperCase();
+  if(!uid){ toast('UID is required','err'); return; }
+  const payrollId = document.getElementById('f-payid').value.trim(); // TEXT, keep leading zeros
   const data = {
-    numId:      document.getElementById('p-id').value.trim(),
+    payrollId,
     uid,
-    firstName:  document.getElementById('p-first').value.trim(),
-    lastName:   document.getElementById('p-last').value.trim(),
-    position:   document.getElementById('p-pos').value,
-    shift:      document.getElementById('p-shift').value,
-    department: document.getElementById('p-dept').value,
-    hub:        document.getElementById('p-hub').value,
-    carryOver:  parseFloat(document.getElementById('p-balance').value)||0,
-    order:      editingUID ? (planners.find(x=>x.uid===editingUID)||{}).order || 999 : planners.length,
+    firstName:    document.getElementById('f-first').value.trim(),
+    lastName:     document.getElementById('f-last').value.trim(),
+    position:     document.getElementById('f-pos').value,
+    contractType: document.getElementById('f-contract').value,
+    email:        document.getElementById('f-email').value.trim(),
+    phone:        document.getElementById('f-phone').value.trim(),
+    cin:          document.getElementById('f-cin').value.trim(),
+    teamsName:    document.getElementById('f-teams').value.trim(),
+    address:      document.getElementById('f-address').value.trim(),
+    status:       'active',
   };
-  const hd = document.getElementById('p-hire').value;
-  if (hd) data.hireDate = hd;
-  try {
-    if (editingUID) {
-      const existing = planners.find(x=>x.uid===editingUID);
-      await db.collection('planners').doc(existing.id).update(data);
-      toast('Planner updated');
+  const hd = document.getElementById('f-hire').value;
+  if(hd) data.hireDate = hd;
+  try{
+    if(editingUID){
+      const ex = PLANNERS.find(x=>x.uid===editingUID);
+      if(!ex){ toast('Planner not found','err'); return; }
+      await db.collection('planners').doc(ex._id).update(data);
+      toast('Planner updated ✓');
     } else {
+      data.order = PLANNERS.length;
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       await db.collection('planners').add(data);
-      toast('Planner added');
+      toast('Planner added ✓');
     }
     closeModal('modal-planner');
     await loadPlanners();
     renderPlanners();
-    updateDashboard();
-  } catch(e) { toast(e.message,'error'); }
+  } catch(e){ toast(e.message,'err'); }
 }
 
-function exportPlannerCSV() {
-  const rows = [['ID','UID','First Name','Last Name','Position','Shift','Hire Date','Leave Balance']];
-  planners.forEach(p => {
-    const bal = (calcYTDGiven(p,2026) - calcTakenLeave(p.uid,2026) + (p.carryOver||0)).toFixed(1);
-    rows.push([p.numId,p.uid,p.firstName,p.lastName,p.position,p.shift,fmtDate(p.hireDate),bal]);
-  });
-  downloadCSV(rows, 'SPC_Planners.csv');
+// EXIT (resign / terminate)
+function openExit(uid){
+  exitUID = uid;
+  const p = PLANNERS.find(x=>x.uid===uid);
+  document.getElementById('exit-modal-title').textContent = `Register Exit — ${p?.firstName||''} ${p?.lastName||''}`;
+  document.getElementById('exit-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('exit-notes').value='';
+  openModal('modal-exit');
+}
+async function saveExit(){
+  if(!exitUID) return;
+  const p = PLANNERS.find(x=>x.uid===exitUID);
+  if(!p){ toast('Not found','err'); return; }
+  const type   = document.getElementById('exit-type').value;
+  const date   = document.getElementById('exit-date').value;
+  const reason = document.getElementById('exit-reason').value;
+  const notes  = document.getElementById('exit-notes').value.trim();
+  try{
+    await db.collection('planners').doc(p._id).update({
+      status: type,
+      exitDate: date,
+      exitReason: reason,
+      exitNotes: notes,
+      exitYear: date ? parseInt(date.split('-')[0]) : new Date().getFullYear(),
+    });
+    toast(`${type==='resigned'?'Resignation':'Termination'} registered ✓`);
+    closeModal('modal-exit');
+    await loadPlanners();
+    renderPlanners();
+    renderTurnaround();
+  } catch(e){ toast(e.message,'err'); }
 }
 
-// ══════════════════════════════════════════════
-// MONTHLY ROSTER
-// ══════════════════════════════════════════════
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-function changeRosterMonth(d) {
-  rosterMonth += d;
-  if (rosterMonth < 0) { rosterMonth = 11; rosterYear--; }
-  if (rosterMonth > 11) { rosterMonth = 0; rosterYear++; }
-  document.getElementById('roster-year').value = rosterYear;
+// ══════════════════════════════════════
+// YEAR TABS (roster)
+// ══════════════════════════════════════
+function renderYearTabs(){
+  const years=[2021,2022,2023,2024,2025,2026];
+  document.getElementById('year-tabs').innerHTML=years.map(y=>
+    `<button class="year-tab${y===rosterYear?' active':''}" onclick="setRosterYear(${y})">${y}</button>`
+  ).join('');
+}
+async function setRosterYear(y){
+  rosterYear=y;
+  renderYearTabs();
+  await loadHolidays(y);
   renderRoster();
 }
-function renderRoster() {
-  rosterYear  = parseInt(document.getElementById('roster-year').value);
-  document.getElementById('roster-month-label').textContent = `${MONTHS[rosterMonth]} ${rosterYear}`;
 
-  const daysInMonth = new Date(rosterYear, rosterMonth+1, 0).getDate();
-  const days = Array.from({length:daysInMonth},(_,i)=>i+1);
+// ══════════════════════════════════════
+// ROSTER
+// ══════════════════════════════════════
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS=['S','M','T','W','T','F','S'];
+const BASE_CODES  =['M','A','N','ADM','Off'];
+const LEAVE_CODES =['CAL','PAL','EL','SL','PH','CP','BT','TRN','ML','BL','DL','SGL','ABS','AA','CCL','CL','SD','SH'];
 
-  // Header
-  const hdr = document.getElementById('roster-header');
-  hdr.innerHTML = `<th>Name</th><th>Position</th>` +
-    days.map(d => {
-      const dow = new Date(rosterYear,rosterMonth,d).getDay();
-      const isWE = dow===0||dow===6;
-      return `<th class="day-cell" style="${isWE?'color:var(--fg3)':''}">${d}<br><span style="font-size:9px;font-weight:400">${'SMTWTFS'[dow]}</span></th>`;
-    }).join('');
+function getShift(p, ds){
+  return (SHIFTS[p.uid]||{})[ds]||'';
+}
+
+function pillCls(c){
+  if(!c) return 'sO';
+  const map={M:'sM',A:'sA',N:'sN',ADM:'sADM',Off:'sOff',O:'sO',
+    CAL:'sCAL',PAL:'sPAL',EL:'sEL',SL:'sSL',PH:'sPH',CP:'sCP',
+    BT:'sBT',TRN:'sTRN',ML:'sML',BL:'sBL',DL:'sDL',SGL:'sSGL',
+    ABS:'sABS',AA:'sAA',CCL:'sCCL',CL:'sCL',SD:'sSD',SH:'sSH'};
+  const base=c.replace(/\/.*/,'');
+  return map[base]||'sxx';
+}
+
+function renderRoster(){
+  const sel  = parseInt(document.getElementById('r-month').value)||NaN;
+  const q    = (document.getElementById('r-search').value||'').toLowerCase();
+  const stFil= document.getElementById('r-status').value;
+  const y    = rosterYear;
+
+  // Build list of dates
+  let dates=[];
+  if(isNaN(sel)){
+    // full year
+    const days=new Date(y,1,29).getDate()===29?366:365;
+    let d=new Date(y,0,1);
+    for(let i=0;i<366;i++){
+      if(d.getFullYear()!==y) break;
+      dates.push(new Date(d));
+      d.setDate(d.getDate()+1);
+    }
+  } else {
+    const last=new Date(y,sel+1,0).getDate();
+    for(let d=1;d<=last;d++) dates.push(new Date(y,sel,d));
+  }
+
+  const planners = PLANNERS.filter(p=>{
+    const pst=p.status||'active';
+    const matchSt = stFil==='all' ? true : pst==='active';
+    const matchQ  = !q || ((p.firstName||'')+(p.lastName||'')+(p.uid||'')).toLowerCase().includes(q);
+    return matchSt && matchQ;
+  });
+
+  // PH bar
+  const phEntries = Object.entries(HOLIDAYS).filter(([d])=>d.startsWith(y+'')).sort((a,b)=>a[0].localeCompare(b[0]));
+  const phBar = document.getElementById('ph-bar');
+  if(phEntries.length){
+    phBar.style.display='flex';
+    phBar.innerHTML='<span style="font-weight:700;margin-right:4px">Holidays:</span>'+
+      phEntries.map(([d,n])=>`<span class="ph-tag">${n} · ${new Date(d+'T00:00:00').toLocaleDateString('fr-MA',{day:'2-digit',month:'short'})}</span>`).join('');
+  } else { phBar.style.display='none'; }
+
+  // Table build
+  const tbl = document.getElementById('rosterTable');
+  // Header row 1: month groups
+  let r1='<thead><tr>';
+  r1+=`<th class="f0 sc" rowspan="2"><div class="th-inner">#</div></th>`;
+  r1+=`<th class="f1 sc" rowspan="2"><div class="th-inner th-left" style="padding-left:8px">Name</div></th>`;
+  r1+=`<th class="f2 sc" rowspan="2"><div class="th-inner">UID</div></th>`;
+  r1+=`<th class="f3 sc" rowspan="2"><div class="th-inner">Position</div></th>`;
+  if(isNaN(sel)){
+    // group by month
+    for(let m=0;m<12;m++){
+      const cnt=new Date(y,m+1,0).getDate();
+      r1+=`<th colspan="${cnt}" style="border-left:2px solid rgba(255,255,255,.1)"><div class="th-inner">${MONTHS[m]}</div></th>`;
+    }
+  }
+  r1+='</tr>';
+  // Row 2: day numbers
+  r1+='<tr class="r2">';
+  dates.forEach(d=>{
+    const ds=dateKey(d);
+    const wd=d.getDay();
+    const isWe=wd===0||wd===6;
+    const isPH=!!HOLIDAYS[ds];
+    const ms=d.getDate()===1?'ms':'';
+    const cls=`${isPH?'ph-day':isWe?'we':''} ${ms}`;
+    r1+=`<th class="${cls}" onclick="toggleHoliday('${ds}')"><div class="di"><span>${d.getDate()}</span><span style="font-size:7px;opacity:.7">${DAYS[wd]}</span></div></th>`;
+  });
+  r1+='</tr></thead>';
 
   // Body
-  const tbody = document.getElementById('roster-tbody');
-  tbody.innerHTML = planners.map(p => {
-    const sh = shifts[p.uid]||{};
-    return `<tr>
-      <td style="font-weight:600;white-space:nowrap">${p.firstName} ${p.lastName}<br><span style="font-size:11px;color:var(--accent);font-family:'JetBrains Mono',monospace">${p.uid}</span></td>
-      <td>${roleBadge(p.position)}</td>
-      ${days.map(d => {
-        const key = `${rosterYear}-${String(rosterMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const s = sh[key]||'';
-        return `<td class="day-cell">${s?shiftBadge(s):''}</td>`;
-      }).join('')}
-    </tr>`;
-  }).join('');
-}
-
-// ══════════════════════════════════════════════
-// TEAMS UPLOAD (parse + write to Firestore)
-// ══════════════════════════════════════════════
-function handleTeamsUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const statusEl = document.getElementById('upload-status');
-  const statusTxt = document.getElementById('upload-status-text');
-  statusEl.style.display = 'block';
-  statusTxt.textContent = `Reading ${file.name}…`;
-
-  const reader = new FileReader();
-  reader.onload = async ev => {
-    try {
-      // We need SheetJS
-      if (!window.XLSX) {
-        statusTxt.textContent = 'Loading parser…';
-        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-      }
-      const data = new Uint8Array(ev.target.result);
-      const wb   = XLSX.read(data, {type:'array'});
-      const ws   = wb.Sheets['Shifts'] || wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-
-      const parsed = {};  // uid -> { date: shift }
-      let filled = 0;
-      const uidMap = {};
-      planners.forEach(p => { uidMap[normalise(p.firstName+' '+p.lastName)] = p.uid; });
-
-      // Manual overrides (Teams name → UID)
-      const manualMap = {
-        'abdessamad ajana':'AAJ078',
-        'azhar mhamdi':'AMH081','azhar mhamedi':'AMH081',
-        'mariam ben daoued':'MBE339','mariam bendaoued':'MBE339',
-        'zakariae moul-el-ksour':'ZMO028','zakariae moul el ksour':'ZMO028',
-      };
-
-      for (let i=1; i<rows.length; i++) {
-        const row = rows[i];
-        const teamsName = (row[0]||'').toString().trim();
-        const dateStr   = (row[3]||'').toString().trim();
-        const label     = (row[8]||'').toString().trim();
-        if (!teamsName || !dateStr || !label) continue;
-
-        // Parse date M/D/YYYY
-        const parts = dateStr.split('/');
-        if (parts.length<3) continue;
-        const [m,d,y] = parts;
-        const iso = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
-
-        // Match UID
-        let uid = manualMap[normalise(teamsName)] || uidMap[normalise(teamsName)];
-        if (!uid) {
-          // fuzzy: 2+ common words
-          const tParts = new Set(normalise(teamsName).split(' '));
-          let best=null, bestScore=0;
-          for (const [k,v] of Object.entries(uidMap)) {
-            const common = k.split(' ').filter(w=>tParts.has(w)).length;
-            if (common > bestScore) { bestScore=common; best=v; }
-          }
-          if (bestScore >= 2) uid = best;
-        }
-        if (!uid) continue;
-
-        if (!parsed[uid]) parsed[uid] = {};
-        parsed[uid][iso] = label === 'Off' ? 'O' : label;
-        filled++;
-      }
-
-      // Write to Firestore in batches
-      statusTxt.textContent = `Writing ${filled} shifts to database…`;
-      const batch = db.batch();
-      for (const [uid, shiftData] of Object.entries(parsed)) {
-        const ref = db.collection('shifts').doc(uid);
-        batch.set(ref, shiftData, {merge:true});
-      }
-      await batch.commit();
-
-      // Log upload
-      await db.collection('uploads').add({
-        fileName: file.name,
-        filled,
-        uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        uploadedBy: currentUser.email
+  let body='<tbody>';
+  // Group by position
+  const posOrder=['Planning Manager','Planning Supervisor','Planning Capabilities Lead','Operations Planner'];
+  posOrder.forEach(pos=>{
+    const group=planners.filter(p=>p.position===pos);
+    if(!group.length) return;
+    body+=`<tr class="grp"><td class="sc f0"></td><td class="sc f1" colspan="3">${pos}<span class="grp-cnt">${group.length}</span></td>${dates.map(()=>'<td></td>').join('')}</tr>`;
+    group.forEach((p,idx)=>{
+      const rowNum = planners.indexOf(p)+1;
+      body+=`<tr>`;
+      body+=`<td class="sc f0" style="font-size:9px;color:var(--text3);text-align:center">${rowNum}</td>`;
+      body+=`<td class="sc f1"><div class="emp-cell"><div class="emp-name">${p.firstName||''} ${p.lastName||''}</div><div class="emp-meta">${p.payrollId||''}</div></div></td>`;
+      body+=`<td class="sc f2" style="font-family:monospace;font-size:9px;font-weight:700;color:var(--accent);text-align:center">${p.uid||''}</td>`;
+      body+=`<td class="sc f3" style="font-size:9px;text-align:center">${(p.position||'').replace('Operations Planner','OPS').replace('Planning Manager','MGR').replace('Planning Supervisor','SUP').replace('Planning Capabilities Lead','PCL')}</td>`;
+      dates.forEach(d=>{
+        const ds=dateKey(d);
+        const wd=d.getDay(); const isWe=wd===0||wd===6; const isPH=!!HOLIDAYS[ds];
+        const cellCls=(isPH?'ph-cell':isWe?'we-cell':'')+(d.getDate()===1?' ms':'');
+        const code=getShift(p,ds);
+        body+=`<td class="${cellCls}" onclick="openEP(this,'${p.uid}','${ds}')">`;
+        if(code) body+=`<span class="sp ${pillCls(code)}">${code}</span>`;
+        body+=`</td>`;
       });
+      body+='</tr>';
+    });
+  });
+  body+='</tbody>';
 
-      statusTxt.textContent = `✓ Done — ${filled} shifts written for ${Object.keys(parsed).length} planners`;
-      toast(`${filled} shifts uploaded`);
-      await loadShifts();
-      renderRoster();
-      renderPayroll();
-      updateDashboard();
-      loadUploadHistory();
-    } catch(err) {
-      statusTxt.textContent = `Error: ${err.message}`;
-      toast(err.message,'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
+  tbl.innerHTML = r1+body;
 }
 
-function normalise(s) { return s.toLowerCase().trim().replace(/[-']/g,' ').replace(/\s+/g,' ').replace(/ /g,''); }
+document.getElementById('r-month').addEventListener('change', renderRoster);
 
-async function loadUploadHistory() {
-  const snap = await db.collection('uploads').orderBy('uploadedAt','desc').limit(20).get().catch(()=>({docs:[]}));
-  const tbody = document.getElementById('upload-history-tbody');
-  if (!snap.docs.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--fg2);padding:24px">No uploads yet</td></tr>'; return; }
-  tbody.innerHTML = snap.docs.map(d => {
-    const r = d.data();
-    return `<tr><td>${r.fileName||'—'}</td><td style="font-size:12px;color:var(--fg2)">${r.fileName||''}</td><td style="font-weight:600;color:var(--accent)">${r.filled||0}</td><td>${r.uploadedAt?.toDate?fmtDate(r.uploadedAt.toDate()):'—'}</td><td style="font-size:12px;color:var(--fg2)">${r.uploadedBy||'—'}</td></tr>`;
+// ══════════════════════════════════════
+// SHIFT EDIT POPUP
+// ══════════════════════════════════════
+let epCtx={};
+function openEP(el,uid,ds){
+  epCtx={uid,ds};
+  const p=PLANNERS.find(x=>x.uid===uid);
+  const cur=p?getShift(p,ds):'';
+  document.getElementById('epTitle').textContent=`${uid} · ${ds}`;
+  document.getElementById('epCustom').value='';
+  document.getElementById('epBase').innerHTML=BASE_CODES.map(c=>
+    `<div class="ep-btn sp ${pillCls(c)}${c===cur?' sel':''}" onclick="applyCode('${c}')">${c}</div>`).join('');
+  document.getElementById('epLeave').innerHTML=LEAVE_CODES.map(c=>
+    `<div class="ep-btn sp ${pillCls(c)}${c===cur?' sel':''}" onclick="applyCode('${c}')">${c}</div>`).join('');
+  const r=el.getBoundingClientRect();
+  const ep=document.getElementById('editPopup');
+  ep.style.left=Math.min(r.left,window.innerWidth-260)+'px';
+  ep.style.top =Math.min(r.bottom+4,window.innerHeight-460)+'px';
+  ep.classList.add('open');
+}
+async function applyCode(code){
+  const p=PLANNERS.find(x=>x.uid===epCtx.uid);
+  if(!p){ closeEP(); return; }
+  if(!SHIFTS[p.uid]) SHIFTS[p.uid]={};
+  if(code==='Off'||!code) delete SHIFTS[p.uid][epCtx.ds];
+  else SHIFTS[p.uid][epCtx.ds]=code;
+  // Save to Firestore
+  try{
+    const upd={};
+    upd[epCtx.ds]=code==='Off'?firebase.firestore.FieldValue.delete():code;
+    await db.collection('shifts').doc(p.uid).set(upd,{merge:true});
+  }catch(e){ toast('Save error: '+e.message,'err'); }
+  closeEP(); renderRoster();
+}
+function applyCustom(){
+  const v=document.getElementById('epCustom').value.trim().toUpperCase();
+  if(v) applyCode(v);
+}
+function closeEP(){ document.getElementById('editPopup').classList.remove('open'); }
+document.addEventListener('click',e=>{
+  const ep=document.getElementById('editPopup');
+  if(ep.classList.contains('open')&&!ep.contains(e.target)&&!e.target.closest('td')) closeEP();
+});
+
+// ══════════════════════════════════════
+// HOLIDAYS (toggle from roster header)
+// ══════════════════════════════════════
+async function toggleHoliday(ds){
+  if(HOLIDAYS[ds]){ delete HOLIDAYS[ds]; toast('Holiday removed'); }
+  else {
+    const n=prompt(`Holiday name for ${ds}:`,'Public Holiday');
+    if(n===null) return;
+    HOLIDAYS[ds]=n||'Public Holiday';
+    toast('Holiday added: '+(n||'Public Holiday'));
+  }
+  await saveHolidays();
+  renderRoster(); renderSettingsHolidays();
+}
+async function saveHolidays(){
+  await db.collection('settings').doc('holidays_'+rosterYear).set(HOLIDAYS);
+}
+
+// ══════════════════════════════════════
+// SETTINGS — HOLIDAYS
+// ══════════════════════════════════════
+async function changeWorkingYear(y){
+  workingYear=parseInt(y); rosterYear=workingYear;
+  document.getElementById('ph-year-label').textContent=y;
+  await loadHolidays(y);
+  renderSettingsHolidays(); renderYearTabs(); renderRoster();
+}
+
+const FIXED_PH_BASE=[
+  ['01-01',"New Year's Day"],
+  ['01-11',"Manifeste de l'Indépendance"],
+  ['03-03',"Fête du Trône"],
+  ['05-01',"Fête du Travail"],
+  ['07-30',"Fête du Trône 2"],
+  ['08-14',"Oued Eddahab"],
+  ['08-20',"Révolution du Roi"],
+  ['08-21',"Fête de la Jeunesse"],
+  ['11-06',"Marche Verte"],
+  ['11-18',"Fête de l'Indépendance"],
+];
+
+function renderSettingsHolidays(){
+  const y=workingYear;
+  document.getElementById('ph-year-label').textContent=y;
+  document.getElementById('set-year').value=y;
+  // presets
+  document.getElementById('ph-presets').innerHTML=FIXED_PH_BASE.map(([md,n])=>{
+    const ds=`${y}-${md}`;
+    const active=!!HOLIDAYS[ds];
+    return `<button class="ph-preset-btn${active?' active':''}" onclick="togglePresetPH('${ds}','${n.replace(/'/g,"\\'")}')">
+      ${active?'✓ ':''}<span>${n}</span><small style="margin-left:auto;color:var(--text3)">${md}</small>
+    </button>`;
   }).join('');
-}
-
-function loadScript(src) {
-  return new Promise((res,rej)=>{
-    const s = document.createElement('script');
-    s.src = src; s.onload=res; s.onerror=rej;
-    document.head.appendChild(s);
-  });
-}
-
-// ══════════════════════════════════════════════
-// LEAVE TRACKER
-// ══════════════════════════════════════════════
-function leaveTab(id, el) {
-  document.querySelectorAll('#view-leaves .tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('leave-overview').hidden    = id!=='overview';
-  document.getElementById('leave-calculator').hidden  = id!=='calculator';
-  document.getElementById('leave-register').hidden    = id!=='register';
-}
-
-function renderLeaveTable() {
-  const q = document.getElementById('leave-search').value.toLowerCase();
-  const year = document.getElementById('leave-year').value;
-  const tbody = document.getElementById('leave-tbody');
-  const filtered = planners.filter(p =>
-    !q || (p.firstName+' '+p.lastName+' '+p.uid).toLowerCase().includes(q)
-  );
-  tbody.innerHTML = filtered.map(p => {
-    const entitle = calcAnnualEntitlement(p);
-    const given   = calcYTDGiven(p, year);
-    const taken   = calcTakenLeave(p.uid, year);
-    const bal     = Math.max(-99, given - taken + (p.carryOver||0));
-    const pct     = Math.min(100, Math.max(0, bal/entitle*100));
-    return `<tr>
-      <td style="font-weight:600">${p.firstName} ${p.lastName}</td>
-      <td>${roleBadge(p.position)}</td>
-      <td style="font-size:12px;color:var(--fg2)">${fmtDate(p.hireDate)}</td>
-      <td style="font-weight:600">${entitle}d</td>
-      <td>${given.toFixed(2)}d</td>
-      <td style="color:var(--danger)">${taken > 0 ? '-'+taken+'d' : '0d'}</td>
-      <td style="font-weight:700;color:${bal<0?'var(--danger)':bal<3?'var(--warn)':'var(--success)'}">${bal.toFixed(2)}d</td>
-      <td style="min-width:100px">
-        <div class="leave-bar">
-          <div class="leave-fill ${bal<3?'danger':bal<7?'warn':''}" style="width:${pct}%"></div>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-function calcNewJoiner() {
-  const sd = document.getElementById('calc-start').value;
-  if (!sd) return;
-  const start = new Date(sd);
-  const y = start.getFullYear();
-  const endOfStartMonth = new Date(y, start.getMonth()+1, 0);
-  const daysLeft = endOfStartMonth.getDate() - start.getDate() + 1;
-  const monthsRemaining = 11 - start.getMonth();
-  const rate = 1.75;
-  const firstMonthCredit = Math.round(rate * (daysLeft/30) * 100) / 100;
-  const total = Math.round((firstMonthCredit + monthsRemaining * rate) * 100) / 100;
-
-  document.getElementById('calc-days-first').textContent = daysLeft;
-  document.getElementById('calc-months').textContent = monthsRemaining;
-  document.getElementById('calc-first-credit').textContent = firstMonthCredit.toFixed(2)+'d';
-  document.getElementById('calc-total').textContent = total.toFixed(2)+'d';
-  document.getElementById('calc-formula').textContent =
-    `Formula: ${firstMonthCredit.toFixed(2)} (first month: ${daysLeft}d × 1.75/30) + ${monthsRemaining} × 1.75 = ${total.toFixed(2)} days`;
-  document.getElementById('calc-result').style.display = 'block';
-}
-
-function populateRegisterPlanner() {
-  const sel = document.getElementById('reg-planner');
-  sel.innerHTML = planners.map(p=>`<option value="${p.uid}">${p.firstName} ${p.lastName} (${p.uid})</option>`).join('');
-}
-
-async function registerLeave() {
-  const uid = document.getElementById('reg-planner').value;
-  const from = document.getElementById('reg-from').value;
-  const to   = document.getElementById('reg-to').value;
-  const type = document.getElementById('reg-type').value;
-  if (!uid||!from||!to) return toast('Fill all fields','error');
-  const days = Math.round((new Date(to)-new Date(from))/(86400000))+1;
-  await db.collection('leaves').add({uid,from,to,type,days,registeredBy:currentUser.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  toast(`${days} day(s) registered`);
-  await loadLeaves();
-  renderLeaveTable();
-}
-
-function exportLeaveCSV() {
-  const rows = [['Name','UID','Position','Entitlement','Given YTD','Taken','Balance']];
-  planners.forEach(p=>{
-    const e=calcAnnualEntitlement(p),g=calcYTDGiven(p,2026),t=calcTakenLeave(p.uid,2026),b=(g-t+(p.carryOver||0)).toFixed(2);
-    rows.push([`${p.firstName} ${p.lastName}`,p.uid,p.position,e,g.toFixed(2),t,b]);
-  });
-  downloadCSV(rows,'SPC_Leave_Balances.csv');
-}
-
-// ══════════════════════════════════════════════
-// PAYROLL
-// ══════════════════════════════════════════════
-function payrollTab(id, el) {
-  document.querySelectorAll('#payroll-tabs .tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('payroll-wd').hidden = id!=='wd';
-  document.getElementById('payroll-wh').hidden = id!=='wh';
-}
-
-function renderPayroll() {
-  const month = parseInt(document.getElementById('payroll-month').value);
-  const year  = parseInt(document.getElementById('payroll-year').value);
-  const daysInMonth = new Date(year, month, 0).getDate();
-
-  const SHIFT_CODES = {
-    working: ['A','M','N','BT','M/C','M/H','M/L','M/C/H','A/C','N/C'],
-    al:      ['CAL','EL'],
-    other:   ['ML','DL','BL','CSL'],
-    sl:      ['SL'],
-    ph:      ['PH','ADM'],
-    off:     ['O'],
-    cp:      ['CP'],
-    cl:      ['CL'],
-  };
-
-  const wdBody = document.getElementById('payroll-wd-tbody');
-  const whBody = document.getElementById('payroll-wh-tbody');
-
-  const rows = planners.map(p => {
-    const sh = shifts[p.uid]||{};
-    let wd=0, al=0, other=0, sl=0, phOff=0, off=0, total=0;
-    for (let d=1; d<=daysInMonth; d++) {
-      const key = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const s = sh[key]||'';
-      if (!s) { total++; continue; }
-      total++;
-      if (SHIFT_CODES.al.includes(s))      al++;
-      else if (SHIFT_CODES.other.includes(s)) other++;
-      else if (SHIFT_CODES.sl.includes(s))  sl++;
-      else if (SHIFT_CODES.ph.includes(s))  phOff++;
-      else if (SHIFT_CODES.off.includes(s)) off++;
-      else if (s) wd++;
-    }
-    const wh = wd * 8.5;
-    return {p, wd, al, other, sl, phOff, off, total:daysInMonth, wh};
-  });
-
-  wdBody.innerHTML = rows.map(({p,wd,al,other,sl,phOff,off,total}) =>
-    `<tr>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${p.numId}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">${p.uid}</td>
-      <td style="font-weight:600">${p.firstName} ${p.lastName}</td>
-      <td>${roleBadge(p.position)}</td>
-      <td style="font-weight:700;color:var(--accent)">${wd}</td>
-      <td>${al||''}</td><td>${other||''}</td><td>${sl||''}</td>
-      <td></td><td></td><td></td><td></td>
-      <td>${phOff||''}</td><td>${off||''}</td>
-      <td class="payroll-total">${total}</td>
-    </tr>`
-  ).join('');
-
-  whBody.innerHTML = rows.map(({p,wh}) =>
-    `<tr>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${p.numId}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">${p.uid}</td>
-      <td style="font-weight:600">${p.firstName} ${p.lastName}</td>
-      <td>${roleBadge(p.position)}</td>
-      <td style="font-weight:700;color:var(--accent)">${wh.toFixed(1)}</td>
-    </tr>`
-  ).join('');
-}
-
-function exportPayrollExcel() {
-  const month = parseInt(document.getElementById('payroll-month').value);
-  const year  = parseInt(document.getElementById('payroll-year').value);
-  const rows = [['ID','UID','First Name','Last Name','Position','Department','Effective WD','AL','ML, DL, BL, CSL','S.L','LTI','Suspension','Injustified Absence','Lateness','Sent Home','Mission, Travel','Public Holiday Off','Off','Total days','Comment']];
-  const daysInMonth = new Date(year,month,0).getDate();
-  const SHIFT_CODES = { al:['CAL','EL'], other:['ML','DL','BL','CSL'], sl:['SL'], ph:['PH','ADM'], off:['O'] };
-  planners.forEach(p => {
-    const sh = shifts[p.uid]||{};
-    let wd=0,al=0,other=0,sl=0,phOff=0,off=0;
-    for (let d=1;d<=daysInMonth;d++) {
-      const key=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const s=sh[key]||'';
-      if (SHIFT_CODES.al.includes(s)) al++;
-      else if (SHIFT_CODES.other.includes(s)) other++;
-      else if (SHIFT_CODES.sl.includes(s)) sl++;
-      else if (SHIFT_CODES.ph.includes(s)) phOff++;
-      else if (SHIFT_CODES.off.includes(s)) off++;
-      else if (s) wd++;
-    }
-    rows.push([p.numId,p.uid,p.firstName,p.lastName,p.position,p.department||'Operations',wd,al,other,sl,0,0,0,0,0,0,phOff,off,daysInMonth,'']);
-  });
-  downloadCSV(rows, `SPC_Payroll_${MONTHS[month-1]}_${year}.csv`);
-}
-
-// ══════════════════════════════════════════════
-// HIRING PIPELINE
-// ══════════════════════════════════════════════
-const STAGES = ['Screening','Interview 1','Interview 2','Offer','Hired','Rejected'];
-
-function renderPipeline() {
-  const board = document.getElementById('pipeline-board');
-  board.innerHTML = STAGES.map(stage => {
-    const stCandidates = candidates.filter(c=>c.stage===stage);
-    return `<div class="pipeline-col">
-      <h4>${stage} <span style="font-size:11px;font-weight:400;color:var(--fg3)">(${stCandidates.length})</span></h4>
-      ${stCandidates.map(c=>{
-        const total = ((c.english||0)+(c.shiftScore||0)+(c.knowledge||0)+(c.skills||0)+(c.softSkills||0)+(c.learning||0));
-        const max = 18;
-        const pct = Math.round(total/max*100);
-        const scoreClass = pct>=70?'score-h':pct>=50?'score-m':'score-l';
-        return `<div class="candidate-card">
-          <div class="name">${c.name||'—'}</div>
-          <div class="meta">${c.role||''}</div>
-          ${total>0?`<span class="score-pill ${scoreClass}">${pct}% — ${total}/${max}</span>`:''}
-        </div>`;
-      }).join('')}
+  // list
+  const entries=Object.entries(HOLIDAYS).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!entries.length){
+    document.getElementById('ph-list').innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-style:italic">No holidays set for '+y+'</div>';
+    return;
+  }
+  document.getElementById('ph-list').innerHTML=entries.map(([d,n])=>{
+    const dt=new Date(d+'T00:00:00');
+    return `<div class="ph-list-item">
+      <div class="ph-date">${dt.toLocaleDateString('fr-MA',{day:'2-digit',month:'short',year:'numeric'})}</div>
+      <div class="ph-name">${n}</div>
+      <button class="btn sm danger" onclick="removePH('${d}')">Remove</button>
     </div>`;
   }).join('');
+}
 
-  const tbody = document.getElementById('scores-tbody');
-  tbody.innerHTML = candidates.map((c,i)=>{
-    const total=(c.english||0)+(c.shiftScore||0)+(c.knowledge||0)+(c.skills||0)+(c.softSkills||0)+(c.learning||0);
-    const pct=Math.round(total/18*100);
+async function togglePresetPH(ds,name){
+  if(HOLIDAYS[ds]) delete HOLIDAYS[ds]; else HOLIDAYS[ds]=name;
+  await saveHolidays();
+  renderSettingsHolidays(); renderRoster();
+}
+async function addHoliday(){
+  const d=document.getElementById('ph-date').value;
+  const n=(document.getElementById('ph-name').value||'').trim()||'Public Holiday';
+  if(!d){ toast('Pick a date','warn'); return; }
+  HOLIDAYS[d]=n;
+  document.getElementById('ph-date').value='';
+  document.getElementById('ph-name').value='';
+  await saveHolidays();
+  renderSettingsHolidays(); renderRoster(); toast('Holiday added ✓');
+}
+async function removePH(ds){
+  delete HOLIDAYS[ds];
+  await saveHolidays();
+  renderSettingsHolidays(); renderRoster();
+}
+
+// ══════════════════════════════════════
+// LEAVES
+// ══════════════════════════════════════
+function renderLeaves(){
+  const y=document.getElementById('lv-year').value||'2026';
+  const q=(document.getElementById('lv-search').value||'').toLowerCase();
+  const tbody=document.getElementById('lv-tbody');
+  const list=PLANNERS.filter(p=>(p.status||'active')==='active')
+    .filter(p=>!q||((p.firstName||'')+(p.lastName||'')).toLowerCase().includes(q));
+  tbody.innerHTML=list.map(p=>{
+    const ytd=calcYTDGiven(p,y);
+    const taken=calcTaken(p.uid,y);
+    const bal=Math.max(0,ytd-taken+(p.carryOver||0));
+    const entit=seniorityYears(p.hireDate)>=5?22.5:21;
     return `<tr>
-      <td>${i+1}</td>
-      <td style="font-weight:600">${c.name}</td>
-      <td>${c.english||'—'}</td><td>${c.shiftScore||'—'}</td><td>${c.knowledge||'—'}</td>
-      <td>${c.skills||'—'}</td><td>${c.softSkills||'—'}</td>
-      <td style="font-weight:700;color:${pct>=70?'var(--success)':pct>=50?'var(--warn)':'var(--danger)'}">${total}/18</td>
-      <td>${c.stage||'—'}</td>
+      <td style="font-weight:600">${p.firstName||''} ${p.lastName||''}</td>
+      <td><span class="uid-badge">${p.uid}</span></td>
+      <td>${posBadge(p.position)}</td>
+      <td style="font-size:11px;color:var(--text3)">${fmtDate(p.hireDate)}</td>
+      <td>${entit}d/yr</td>
+      <td>${ytd.toFixed(2)}d</td>
+      <td>${taken}d</td>
+      <td style="font-weight:700;color:${bal<3?'var(--red)':bal<7?'var(--amber)':'var(--accent)'}">${bal.toFixed(2)}d</td>
     </tr>`;
   }).join('');
 }
 
-function hiringTab(id, el) {
-  document.querySelectorAll('#view-hiring .tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('hiring-pipeline').hidden = id!=='pipeline';
-  document.getElementById('hiring-scores').hidden   = id!=='scores';
-  document.getElementById('hiring-contracts').hidden= id!=='contracts';
-  if (id==='contracts') renderContracts();
+// ══════════════════════════════════════
+// FTE TURNAROUND
+// ══════════════════════════════════════
+function renderTurnaround(){
+  const y=parseInt(document.getElementById('tt-year').value)||2026;
+  const typeF=document.getElementById('tt-type').value;
+  const list=PLANNERS.filter(p=>{
+    const pst=p.status||'active';
+    if(pst==='active') return false;
+    if(typeF && pst!==typeF) return false;
+    if(p.exitYear && p.exitYear!==y) return false;
+    if(!p.exitYear && p.exitDate){
+      const ey=parseInt((p.exitDate||'').split('-')[0]);
+      if(ey!==y) return false;
+    }
+    return true;
+  });
+  const grid=document.getElementById('tt-grid');
+  if(!list.length){
+    grid.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text3);grid-column:1/-1">No exits recorded for ${y}${typeF?' ('+typeF+')':''}.</div>`;
+    return;
+  }
+  grid.innerHTML=list.map(p=>`
+    <div class="tta-card">
+      <div class="tta-name">${p.firstName||''} ${p.lastName||''}</div>
+      <div class="tta-uid">${p.uid} · ${p.payrollId||''}</div>
+      <div class="tta-row"><span class="tta-lbl">Position</span><span class="tta-val">${(p.position||'').replace('Operations Planner','OPS Planner')}</span></div>
+      <div class="tta-row"><span class="tta-lbl">Hire Date</span><span class="tta-val">${fmtDate(p.hireDate)}</span></div>
+      <div class="tta-row"><span class="tta-lbl">Exit Date</span><span class="tta-val">${fmtDate(p.exitDate)}</span></div>
+      <div class="tta-row"><span class="tta-lbl">Type</span><span class="tta-val ${p.status==='resigned'?'s-resigned':'s-terminated'}" style="padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">${p.status==='resigned'?'Resignation':'Termination'}</span></div>
+      <div class="tta-row"><span class="tta-lbl">Reason</span><span class="reason-pill">${p.exitReason||'—'}</span></div>
+      ${p.exitNotes?`<div style="margin-top:8px;font-size:10px;color:var(--text3);background:var(--bg);padding:6px 8px;border-radius:var(--r)">${p.exitNotes}</div>`:''}
+    </div>`).join('');
 }
 
-function openAddCandidate() { document.getElementById('modal-candidate').hidden=false; }
-
-async function saveCandidate() {
-  const data = {
-    name:       document.getElementById('c-name').value.trim(),
-    role:       document.getElementById('c-role').value,
-    stage:      document.getElementById('c-stage').value,
-    english:    parseInt(document.getElementById('c-english').value)||0,
-    shiftScore: parseInt(document.getElementById('c-shift-sc').value)||0,
-    knowledge:  parseInt(document.getElementById('c-know').value)||0,
-    skills:     parseInt(document.getElementById('c-skills').value)||0,
-    softSkills: parseInt(document.getElementById('c-soft').value)||0,
-    learning:   parseInt(document.getElementById('c-learn').value)||0,
-    notes:      document.getElementById('c-notes').value,
-    createdAt:  firebase.firestore.FieldValue.serverTimestamp()
-  };
-  if (!data.name) return toast('Name required','error');
-  await db.collection('candidates').add(data);
-  toast('Candidate added');
-  closeModal('modal-candidate');
-  await loadCandidates();
-  renderPipeline();
-  updateDashboard();
+// ══════════════════════════════════════
+// TEAMS UPLOAD (stub — real parser to add)
+// ══════════════════════════════════════
+function handleTeamsUpload(e){
+  const f=e.target.files[0]; if(!f) return;
+  document.getElementById('upload-log').textContent='Processing '+f.name+'…';
+  // Full parser will be added in next iteration
+  toast('Teams upload coming in next update','warn');
 }
 
-function renderContracts() {
-  const tbody = document.getElementById('contracts-tbody');
-  if (!contracts.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--fg2);padding:24px">No contracts yet</td></tr>'; return; }
-  tbody.innerHTML = contracts.map(c=>`<tr>
-    <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${c.uid}</td>
-    <td>${c.name}</td><td>${roleBadge(c.position)}</td><td>${c.contractType}</td>
-    <td>${fmtDate(c.start)}</td><td>${fmtDate(c.end)}</td>
-    <td><span class="role-badge ${c.status==='Active'?'role-sup':'role-planner'}">${c.status}</span></td>
-  </tr>`).join('');
+// ══════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════
+async function exportRosterCSV(){
+  const rows=[['#','Payroll ID','UID','Name','Position']];
+  PLANNERS.filter(p=>(p.status||'active')==='active').forEach((p,i)=>{
+    rows.push([i+1,p.payrollId,p.uid,(p.firstName||'')+(p.lastName?(' '+p.lastName):''),p.position]);
+  });
+  const csv=rows.map(r=>r.map(c=>typeof c==='string'&&c.includes(',')?`"${c}"`:c).join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  if(!_dl) _dl=await window.claude?.use?.('downloads')??null;
+  if(_dl){ try{ await _dl.save({filename:'SPC_Roster.csv',data:blob}); }catch(e){} }
+  else { const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='SPC_Roster.csv';a.click();URL.revokeObjectURL(u); }
 }
 
-// ══════════════════════════════════════════════
-// WORKLOAD ANALYSIS
-// ══════════════════════════════════════════════
-function handleBIUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async ev => {
-    if (!window.XLSX) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-    const data = new Uint8Array(ev.target.result);
-    const wb = XLSX.read(data, {type:'array'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-    if (!rows.length) return toast('Empty file','error');
-
-    // Try to find UID/ID column and a metric column
-    const keys = Object.keys(rows[0]);
-    const uidKey = keys.find(k=>/uid|id/i.test(k))||keys[0];
-    const metricKeys = keys.filter(k=>k!==uidKey);
-
-    const uidMap = {};
-    planners.forEach(p=>{ uidMap[p.uid]= `${p.firstName} ${p.lastName}`; uidMap[p.numId]=`${p.firstName} ${p.lastName}`; });
-
-    const results = rows.map(r => {
-      const uid = String(r[uidKey]).trim();
-      const name = uidMap[uid]||uid;
-      const metrics = {};
-      metricKeys.forEach(k=>{ metrics[k]=r[k]; });
-      return {uid, name, metrics};
-    }).filter(r=>r.uid);
-
-    const container = document.getElementById('workload-results');
-    container.innerHTML = `<h3 style="font-size:15px;font-weight:700;margin-bottom:16px">Workload Analysis — ${file.name}</h3>
-      <div class="workload-grid">${results.map(r=>{
-        const vals = Object.values(r.metrics).filter(v=>typeof v==='number');
-        const max = Math.max(...vals,1);
-        const main = vals[0]||0;
-        const pct = Math.round(main/max*100);
-        return `<div class="workload-card">
-          <div class="wl-name">${r.name}</div>
-          <div style="font-size:11px;color:var(--fg2);margin-bottom:6px;font-family:'JetBrains Mono',monospace">${r.uid}</div>
-          ${metricKeys.map((k,i)=>`
-            <div style="font-size:10px;color:var(--fg3);margin-top:4px">${k}</div>
-            <div class="wl-bar"><div class="wl-fill" style="width:${vals[i]?Math.round(vals[i]/max*100):0}%"></div></div>
-            <div class="wl-pct">${vals[i]||0}</div>
-          `).join('')}
-        </div>`;
-      }).join('')}</div>`;
-    toast(`${results.length} planners analyzed`);
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// ══════════════════════════════════════════════
-// CSV DOWNLOAD
-// ══════════════════════════════════════════════
-function downloadCSV(rows, filename) {
-  const csv = rows.map(r=>r.map(c=>
-    c===null||c===undefined?'':
-    typeof c==='string'&&(c.includes(','))?`"${c.replace(/"/g,'""')}"`:String(c)
-  ).join(',')).join('\n');
-  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function viewPlannerLeaves(uid) { nav('leaves'); }
-
-// ══════════════════════════════════════════════
-// INIT: set current payroll month
-// ══════════════════════════════════════════════
-document.getElementById('payroll-month').value = new Date().getMonth()+1;
-rosterMonth = new Date().getMonth();
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.getElementById('r-month').value = new Date().getMonth();
+renderYearTabs();
 </script>
 
 </body></html>
