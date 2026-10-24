@@ -2199,109 +2199,163 @@ function handleHistoryUpload(e){
   busyEl.innerHTML='<span style="animation:spin 1s linear infinite;display:inline-block;margin-right:6px">⏳</span>Parsing '+f.name+' …';
   const reader=new FileReader();
   reader.onload=ev=>{
-    setTimeout(()=>{
-    try{
-      const wb=XLSX.read(ev.target.result,{type:'array'});
-      // Find roster sheet
-      const sheetName=wb.SheetNames.find(n=>n.includes('Roster'))||wb.SheetNames[0];
-      const ws=wb.Sheets[sheetName];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-
-      // Build UID→planner map
-      const byUid={};
-      PLANNERS.forEach(p=>{ if(p.uid) byUid[p.uid.toString().trim()]=p; });
-
-      // Header row is index 3, data from index 4
-      const headerRow=rows[3]||[];
-      // Dates start at col 18 (index 18)
-      const DATE_START=18;
-      // Parse a date header that may be: serial number, 'DD-MM-YYYY', 'D-MMM', JS Date, etc.
-      function _parseHistDate(h){
-        if(!h && h!==0) return '';
-        if(typeof h==='number'){
-          // Excel serial
-          try{
-            const d=XLSX.SSF.parse_date_code(h);
-            return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
-          }catch(e){return '';}
-        }
-        const s=h.toString().trim();
-        if(!s) return '';
-        // DD-MM-YYYY or DD/MM/YYYY
-        const dmy=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/.exec(s);
-        if(dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
-        // YYYY-MM-DD already
-        if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-        // Try native parse (handles 'Jan 01 2021' etc)
-        const d=new Date(s);
-        if(!isNaN(d)) return d.toISOString().split('T')[0];
-        return '';
-      }
-
-      const dateCols=[];
-      for(let c=DATE_START;c<headerRow.length;c++){
-        const h=headerRow[c];
-        if(h===undefined||h===null||h==='') continue;
-        const dateStr=_parseHistDate(h);
-        if(!dateStr) continue;
-        dateCols.push({col:c,date:dateStr});
-      }
-
-      let matched=0,skipped=0;
-      const toProcess=[];
-
-      for(let r=4;r<rows.length;r++){
-        const row=rows[r];
-        const uid=(row[1]||'').toString().trim();
-        if(!uid) continue;
-        const planner=byUid[uid];
-        if(!planner){skipped++;continue;}
-        matched++;
-        dateCols.forEach(({col,date})=>{
-          if(!date) return;
-          const raw=row[col];
-          // Only store actual shift codes — skip empty, 0, purely numeric values
-          const code=(raw===undefined||raw===null||raw==='')?'':raw.toString().trim();
-          if(!code||/^\d+(\.\d+)?$/.test(code)) return; // skip numbers (serial dates leaked into data)
-          toProcess.push({uid:planner.uid,name:(planner.firstName||'')+' '+(planner.lastName||''),date,code});
-        });
-      }
-
-      // Conflict detection
-      _histQueue=[];
-      _histConflicts=[];
-      toProcess.forEach(item=>{
-        const existing=(SHIFTS[item.uid]||{})[item.date];
-        if(!existing||existing===item.code){
-          _histQueue.push(item);
-        } else {
-          _histConflicts.push({...item,existing,choice:'use'});
-        }
-      });
-
-      const statsEl=document.getElementById('history-stats');
-      statsEl.style.display='block';
-      statsEl.innerHTML=`<div class="upload-progress">
-        ✅ Matched <b>${matched}</b> employees · ⚠️ Skipped <b>${skipped}</b> unknown UIDs · 🔄 <b>${_histConflicts.length}</b> conflicts · ✓ <b>${_histQueue.length}</b> entries ready
-      </div>`;
-
-      if(_histConflicts.length){
-        _buildConflictTable('history');
-        document.getElementById('history-conflict-wrap').style.display='block';
-        document.getElementById('history-noconflict-wrap').style.display='none';
-      } else {
-        document.getElementById('history-conflict-wrap').style.display='none';
-        document.getElementById('history-noconflict-wrap').style.display='block';
-      }
-      busyEl.style.display='none';
-    }catch(err){
-      busyEl.style.display='none';
-      toast('Error parsing file: '+err.message,'error');
-    }
-    },0);
+    // Use async chunked processing to avoid freezing the browser
+    _parseHistoryAsync(ev.target.result, busyEl);
   };
   reader.readAsArrayBuffer(f);
 }
+
+function _parseHistDate(h){
+  if(!h && h!==0) return '';
+  if(typeof h==='number'){
+    try{const d=XLSX.SSF.parse_date_code(h);return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;}catch(e){return '';}
+  }
+  const s=h.toString().trim();
+  if(!s) return '';
+  const dmy=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/.exec(s);
+  if(dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d=new Date(s);
+  if(!isNaN(d)) return d.toISOString().split('T')[0];
+  return '';
+}
+
+async function _parseHistoryAsync(arrayBuffer, busyEl){
+  const updateBusy=(msg)=>{ if(busyEl){busyEl.style.display='block';busyEl.innerHTML='<span style="display:inline-block;margin-right:6px">⏳</span>'+msg;} };
+  try{
+    updateBusy('Reading file…');
+    await _yield();
+
+    // cellDates:true so SheetJS returns JS Date objects for date cells (not serials)
+    const wb=XLSX.read(arrayBuffer,{type:'array', cellDates:true, sheetStubs:false});
+    updateBusy('Identifying sheet…');
+    await _yield();
+
+    const sheetName=wb.SheetNames.find(n=>n.includes('Roster'))||wb.SheetNames[0];
+    const ws=wb.Sheets[sheetName];
+
+    updateBusy('Converting rows…');
+    await _yield();
+
+    // raw:false so dates come through as Date objects via cellDates
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false});
+
+    // Build UID→planner map (trim + lowercase for safety)
+    const byUid={};
+    PLANNERS.forEach(p=>{ if(p.uid) byUid[p.uid.toString().trim()]=p; });
+
+    // Header row = index 3, dates start at col 18
+    const headerRow=rows[3]||[];
+    const DATE_START=18;
+    const dateCols=[];
+    for(let c=DATE_START;c<headerRow.length;c++){
+      const h=headerRow[c];
+      if(h===null||h===undefined||h==='') continue;
+      // With raw:false + cellDates:true, dates come as formatted strings like "1/1/21" or ISO
+      // Try both: if it's already a date string parse it, else use _parseHistDate
+      const dateStr=_parseHistDate(h);
+      if(!dateStr) continue;
+      dateCols.push({col:c,date:dateStr});
+    }
+
+    updateBusy(`Found ${dateCols.length} date columns. Processing employees…`);
+    await _yield();
+
+    // Build UID map directly from sheet col 1 (rows 4+) to catch exact format used
+    // Also try matching with the ws cell address approach for reliability
+    const ws2=wb.Sheets[sheetName];
+    const rowsRaw=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null,raw:true});
+
+    // Date cols from raw sheet — header row 3, col 18+
+    const headerRaw=rowsRaw[3]||[];
+    const dateColsRaw=[];
+    for(let c=DATE_START;c<headerRaw.length;c++){
+      const h=headerRaw[c];
+      if(h===null||h===undefined||h==='') continue;
+      let dateStr='';
+      if(typeof h==='number'){
+        // Excel serial — convert
+        try{
+          const d=XLSX.SSF.parse_date_code(h);
+          dateStr=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+        }catch(e){}
+      } else if(h instanceof Date){
+        dateStr=h.toISOString().split('T')[0];
+      } else {
+        dateStr=_parseHistDate(h.toString());
+      }
+      if(dateStr) dateColsRaw.push({col:c,date:dateStr});
+    }
+
+    // Use whichever gave us more dates
+    const finalDateCols=dateColsRaw.length>=dateCols.length?dateColsRaw:dateCols;
+
+    updateBusy(`Processing ${rowsRaw.length-4} employees across ${finalDateCols.length} dates…`);
+    await _yield();
+
+    let matched=0, skipped=0;
+    const toProcess=[];
+    const CHUNK=10;
+
+    for(let r=4;r<rowsRaw.length;r++){
+      const row=rowsRaw[r];
+      // UID is col 1 — trim whitespace
+      const uid=(row[1]===null||row[1]===undefined)?'':row[1].toString().trim();
+      if(!uid) continue;
+      const planner=byUid[uid];
+      if(!planner){skipped++;continue;}
+      matched++;
+      finalDateCols.forEach(({col,date})=>{
+        const raw=row[col];
+        if(raw===null||raw===undefined||raw==='') return;
+        const code=raw.toString().trim();
+        // Skip purely numeric values (leaked serials) and empty
+        if(!code||/^\d+(\.\d+)?$/.test(code)) return;
+        toProcess.push({uid:planner.uid,name:(planner.firstName||'')+' '+(planner.lastName||''),date,code});
+      });
+      if((r-4)%CHUNK===0){
+        updateBusy(`Processing… ${r-3}/${rowsRaw.length-4} employees · ${toProcess.length} shifts found`);
+        await _yield();
+      }
+    }
+
+    updateBusy('Checking conflicts…');
+    await _yield();
+
+    _histQueue=[];
+    _histConflicts=[];
+    toProcess.forEach(item=>{
+      const existing=(SHIFTS[item.uid]||{})[item.date];
+      if(!existing||existing===item.code){
+        _histQueue.push(item);
+      } else {
+        _histConflicts.push({...item,existing,choice:'use'});
+      }
+    });
+
+    const statsEl=document.getElementById('history-stats');
+    statsEl.style.display='block';
+    statsEl.innerHTML=`<div class="upload-progress">
+      ✅ Matched <b>${matched}</b> employees · ⚠️ Skipped <b>${skipped}</b> unknown UIDs · 🔄 <b>${_histConflicts.length}</b> conflicts · ✓ <b>${_histQueue.length}</b> entries ready
+    </div>`;
+
+    if(_histConflicts.length){
+      _buildConflictTable('history');
+      document.getElementById('history-conflict-wrap').style.display='block';
+      document.getElementById('history-noconflict-wrap').style.display='none';
+    } else {
+      document.getElementById('history-conflict-wrap').style.display='none';
+      document.getElementById('history-noconflict-wrap').style.display='block';
+    }
+    busyEl.style.display='none';
+  }catch(err){
+    busyEl.style.display='none';
+    toast('Error parsing file: '+err.message,'error');
+  }
+}
+
+// Yield control back to browser event loop
+function _yield(){ return new Promise(r=>setTimeout(r,0)); }
 
 async function applyHistoryImport(){
   const toWrite=[..._histQueue];
