@@ -3,6 +3,8 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 
+<!-- SheetJS for xlsx parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Firebase -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
@@ -270,6 +272,55 @@ tbody tr:hover td{background:var(--bg3)}
 .btn.promote:hover{background:#DBEAFE}
 /* Roster locked cell */
 .locked-cell{background:#F8FAFC!important;opacity:.35;pointer-events:none}
+
+/* ── UPLOAD PAGE ── */
+.upload-zone{background:var(--bg2);border:2px dashed var(--border2);border-radius:var(--r2);padding:32px;text-align:center;cursor:pointer;transition:border-color .2s}
+.upload-zone:hover{border-color:var(--accent)}
+.upload-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px}
+.upload-tab{padding:8px 18px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s}
+.upload-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.upload-section{display:none}.upload-section.active{display:block}
+.conflict-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.conflict-tbl th{background:var(--navy);color:#fff;padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+.conflict-tbl td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.conflict-tbl tr:hover td{background:var(--bg3)}
+.conf-keep{background:#E8F7F0;color:#065F46;border:1px solid #6EE7B7}
+.conf-use{background:#DBEAFE;color:#1D4ED8;border:1px solid #93C5FD}
+.conf-btn{font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;cursor:pointer;border:none}
+.upload-progress{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-top:12px;font-size:11px}
+.up-stat{display:inline-flex;align-items:center;gap:5px;margin-right:16px;font-weight:600}
+.up-stat .n{font-size:16px}
+
+/* ── ORGANIGRAM TREE ── */
+.org-tree{padding:24px;overflow:auto;flex:1}
+.org-node-wrap{display:flex;flex-direction:column;align-items:center;gap:0}
+.org-node{background:var(--bg2);border:1.5px solid var(--border2);border-radius:10px;padding:10px 14px;min-width:150px;max-width:190px;text-align:center;position:relative;cursor:default;transition:box-shadow .15s}
+.org-node:hover{box-shadow:0 4px 16px rgba(0,0,0,.12);border-color:var(--accent)}
+.org-node-name{font-weight:700;font-size:11px;margin-bottom:2px}
+.org-node-uid{font-size:9px;color:var(--text3);font-family:monospace}
+.org-node-pos{margin-top:4px}
+.org-node-lvl{font-size:9px;color:var(--text3);margin-top:2px;font-weight:600}
+.org-children{display:flex;gap:24px;justify-content:center;position:relative;margin-top:0}
+.org-v-line{width:2px;height:20px;background:var(--border2);margin:0 auto}
+.org-h-wrap{display:flex;gap:24px;justify-content:center;position:relative}
+.org-h-wrap::before{content:'';position:absolute;top:0;left:50%;right:50%;height:2px;background:var(--border2);transform:translateX(-50%)}
+.org-branch{display:flex;flex-direction:column;align-items:center;position:relative}
+.org-branch-line{width:2px;height:20px;background:var(--border2)}
+.org-h-line{position:absolute;top:0;height:2px;background:var(--border2)}
+.org-root-highlight{border-color:var(--accent);background:linear-gradient(135deg,#f0fff8,#e8f7f0)}
+
+/* ── DECISION REGISTRY ── */
+.decision-tabs{display:flex;gap:4px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.decision-tab{height:26px;padding:0 14px;font-size:11px;font-weight:600;border-radius:var(--r);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;transition:background .12s}
+.decision-tab.active{background:var(--accent);color:#fff;border-color:var(--accent2)}
+.registry-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;display:flex;gap:14px;align-items:flex-start}
+.registry-avatar{width:36px;height:36px;border-radius:50%;background:var(--navy3);color:#7AAABF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.registry-body{flex:1}
+.registry-name{font-weight:700;font-size:12px}
+.registry-uid{font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:4px}
+.registry-event{font-size:11px;color:var(--text2)}
+.registry-date{font-size:10px;color:var(--text3);margin-top:2px}
+.registry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:16px;overflow-y:auto;flex:1}
 </style>
 
 <!-- LOGIN -->
@@ -349,8 +400,14 @@ tbody tr:hover td{background:var(--bg3)}
       <!-- ══ PLANNERS PAGE ══ -->
       <div class="page active" id="page-planners">
         <div class="page-hdr">
-          <h2>Employees Registry</h2>
-          <div class="filter-bar">
+          <div style="display:flex;align-items:center;gap:12px;flex:1">
+            <h2 id="emp-page-title">Employees Registry</h2>
+            <div class="decision-tabs">
+              <div class="decision-tab active" id="dtab-list" onclick="switchEmpTab('list')">👥 Employees</div>
+              <div class="decision-tab" id="dtab-registry" onclick="switchEmpTab('registry')">📋 Decision Registry</div>
+            </div>
+          </div>
+          <div class="filter-bar" id="emp-filters">
             <input type="text" id="p-search" placeholder="Search name / UID…" oninput="renderPlanners()" style="width:160px">
             <select id="p-pos-fil" onchange="renderPlanners()">
               <option value="">All Positions</option>
@@ -368,9 +425,24 @@ tbody tr:hover td{background:var(--bg3)}
               <option value="terminated">Terminated</option>
             </select>
           </div>
-          <button class="btn primary" onclick="openAddPlanner()">+ Add Employee</button>
+          <div class="filter-bar" id="reg-filters" style="display:none">
+            <select id="reg-type-fil" onchange="renderRegistry()">
+              <option value="">All Events</option>
+              <option value="hired">Hired</option>
+              <option value="promoted">Promotions</option>
+              <option value="resigned">Resignations</option>
+              <option value="terminated">Terminations</option>
+            </select>
+            <select id="reg-year-fil" onchange="renderRegistry()">
+              <option value="">All Years</option>
+              <option>2021</option><option>2022</option><option>2023</option><option>2024</option><option>2025</option><option>2026</option>
+            </select>
+          </div>
+          <button class="btn primary" id="btn-add-emp" onclick="openAddPlanner()">+ Add Employee</button>
         </div>
-        <div class="tbl-wrap">
+
+        <!-- Employee list tab -->
+        <div id="emp-list-tab" class="tbl-wrap">
           <table>
             <thead><tr>
               <th style="width:90px">Payroll ID</th>
@@ -385,6 +457,11 @@ tbody tr:hover td{background:var(--bg3)}
             </tr></thead>
             <tbody id="p-tbody"></tbody>
           </table>
+        </div>
+
+        <!-- Decision Registry tab -->
+        <div id="emp-registry-tab" style="display:none;flex:1;overflow-y:auto">
+          <div class="registry-grid" id="registry-grid"></div>
         </div>
       </div>
 
@@ -451,15 +528,83 @@ tbody tr:hover td{background:var(--bg3)}
 
       <!-- ══ UPLOAD PAGE ══ -->
       <div class="page" id="page-upload">
-        <div class="page-hdr"><h2>Teams Shifts Upload</h2></div>
-        <div style="padding:24px;flex:1;overflow-y:auto">
-          <div style="background:var(--bg2);border:2px dashed var(--border2);border-radius:var(--r2);padding:40px;text-align:center;cursor:pointer;max-width:520px" onclick="document.getElementById('teamsFile').click()">
-            <input type="file" id="teamsFile" accept=".xlsx,.xls" style="display:none" onchange="handleTeamsUpload(event)">
-            <div style="font-size:32px;margin-bottom:12px">📤</div>
-            <div style="font-weight:700;font-size:14px;margin-bottom:6px">Upload Teams Shifts Export</div>
-            <div style="color:var(--text3);font-size:11px">ScheduleImportFormat_*.xlsx</div>
+        <div class="page-hdr">
+          <h2>Data Import</h2>
+        </div>
+        <div style="padding:20px 24px;flex:1;overflow-y:auto">
+          <div class="upload-tabs">
+            <div class="upload-tab active" onclick="switchUploadTab('teams',this)">📤 Teams Shifts (2026+)</div>
+            <div class="upload-tab" onclick="switchUploadTab('history',this)">📂 History Migration (2021–2025)</div>
           </div>
-          <div id="upload-log" style="margin-top:16px;font-size:11px;color:var(--text2)"></div>
+
+          <!-- TEAMS UPLOAD -->
+          <div class="upload-section active" id="usec-teams">
+            <div class="upload-zone" onclick="document.getElementById('teamsFile').click()" style="max-width:560px;margin-bottom:16px">
+              <input type="file" id="teamsFile" accept=".xlsx,.xls" style="display:none" onchange="handleTeamsUpload(event)">
+              <div style="font-size:32px;margin-bottom:10px">📤</div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:4px">Upload Teams Shifts Export</div>
+              <div style="color:var(--text3);font-size:11px">ScheduleImportFormat_*.xlsx — matches employees by Work Email</div>
+            </div>
+            <div id="teams-stats" style="display:none;margin-bottom:14px"></div>
+            <div id="teams-conflict-wrap" style="display:none">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-weight:700;font-size:13px">⚠️ Conflicts found — choose per row</span>
+                <div style="display:flex;gap:8px">
+                  <button class="btn sm" onclick="resolveAllConflicts('teams','keep')">Keep All Existing</button>
+                  <button class="btn sm primary" onclick="resolveAllConflicts('teams','use')">Use All Uploaded</button>
+                  <button class="btn sm primary" onclick="applyTeamsImport()">✓ Confirm &amp; Save</button>
+                </div>
+              </div>
+              <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+                <table class="conflict-tbl" id="teams-conflict-tbl">
+                  <thead><tr><th>Employee</th><th>Date</th><th>Existing</th><th>Uploaded</th><th>Choice</th></tr></thead>
+                  <tbody id="teams-conflict-body"></tbody>
+                </table>
+              </div>
+            </div>
+            <div id="teams-noconflict-wrap" style="display:none">
+              <div style="background:#D1FAE5;border:1px solid #6EE7B7;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;max-width:560px">
+                <span style="font-weight:600;color:#065F46">✓ No conflicts — ready to save</span>
+                <button class="btn primary sm" onclick="applyTeamsImport()">Save All Shifts</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- HISTORY MIGRATION -->
+          <div class="upload-section" id="usec-history">
+            <div style="background:#FFF8E8;border:1px solid #F5D080;border-radius:var(--r);padding:10px 14px;font-size:11px;color:#7A5000;margin-bottom:14px;max-width:560px">
+              📋 Upload the historical Excel roster (2021–2025). Employees are matched by <b>UID</b> (column B). Unrecognised UIDs are skipped. For each year file, the date columns start at column 19 (S).
+            </div>
+            <div class="upload-zone" onclick="document.getElementById('historyFile').click()" style="max-width:560px;margin-bottom:16px">
+              <input type="file" id="historyFile" accept=".xlsx,.xls" style="display:none" onchange="handleHistoryUpload(event)">
+              <div style="font-size:32px;margin-bottom:10px">📂</div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:4px">Upload Historical Roster</div>
+              <div style="color:var(--text3);font-size:11px">2021_Roster.xlsx, 2022_Roster.xlsx … — matched by UID</div>
+            </div>
+            <div id="history-stats" style="display:none;margin-bottom:14px"></div>
+            <div id="history-conflict-wrap" style="display:none">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-weight:700;font-size:13px">⚠️ Conflicts found — choose per row</span>
+                <div style="display:flex;gap:8px">
+                  <button class="btn sm" onclick="resolveAllConflicts('history','keep')">Keep All Existing</button>
+                  <button class="btn sm primary" onclick="resolveAllConflicts('history','use')">Use All Uploaded</button>
+                  <button class="btn sm primary" onclick="applyHistoryImport()">✓ Confirm &amp; Save</button>
+                </div>
+              </div>
+              <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+                <table class="conflict-tbl" id="history-conflict-tbl">
+                  <thead><tr><th>Employee</th><th>Date</th><th>Existing</th><th>Uploaded</th><th>Choice</th></tr></thead>
+                  <tbody id="history-conflict-body"></tbody>
+                </table>
+              </div>
+            </div>
+            <div id="history-noconflict-wrap" style="display:none">
+              <div style="background:#D1FAE5;border:1px solid #6EE7B7;border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;max-width:560px">
+                <span style="font-weight:600;color:#065F46">✓ No conflicts — ready to save</span>
+                <button class="btn primary sm" onclick="applyHistoryImport()">Save All Shifts</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1879,13 +2024,272 @@ function renderTurnaround(){
 }
 
 // ══════════════════════════════════════
-// TEAMS UPLOAD (stub — real parser to add)
+// ══════════════════════════════════════
+// UPLOAD — shared state
+// ══════════════════════════════════════
+let _teamsQueue=[];   // {uid,date,code,name} — accepted entries
+let _teamsConflicts=[]; // {uid,name,date,existing,uploaded,choice}
+let _histQueue=[];
+let _histConflicts=[];
+
+function switchUploadTab(which,el){
+  document.querySelectorAll('.upload-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.upload-section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('usec-'+which).classList.add('active');
+}
+
+// ══════════════════════════════════════
+// TEAMS UPLOAD — SheetJS parser
 // ══════════════════════════════════════
 function handleTeamsUpload(e){
   const f=e.target.files[0]; if(!f) return;
-  document.getElementById('upload-log').textContent='Processing '+f.name+'…';
-  // Full parser will be added in next iteration
-  toast('Teams upload coming in next update','warn');
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      // Find Shifts sheet (first sheet that has 'Shifts' or just first)
+      const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('shift'))||wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+
+      // Build email→planner map
+      const byEmail={};
+      PLANNERS.forEach(p=>{ if(p.email) byEmail[p.email.toLowerCase().trim()]=p; });
+
+      let matched=0,skipped=0,dupes=0;
+      const toProcess=[]; // {uid,name,date,code}
+
+      rows.forEach(row=>{
+        const email=(row[1]||'').toString().trim().toLowerCase();
+        const rawDate=row[3];
+        const code=(row[8]||'').toString().trim();
+        if(!email||!rawDate||!code) return;
+        const planner=byEmail[email];
+        if(!planner){skipped++;return;}
+        // Parse date — could be serial number or string
+        let dateStr='';
+        if(typeof rawDate==='number'){
+          const d=XLSX.SSF.parse_date_code(rawDate);
+          dateStr=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+        } else {
+          const d=new Date(rawDate);
+          if(isNaN(d)) return;
+          dateStr=d.toISOString().split('T')[0];
+        }
+        matched++;
+        toProcess.push({uid:planner.uid,name:(planner.firstName||'')+' '+(planner.lastName||''),date:dateStr,code});
+      });
+
+      // Conflict detection
+      _teamsQueue=[];
+      _teamsConflicts=[];
+      let autoAccepted=0;
+
+      toProcess.forEach(item=>{
+        const existing=(SHIFTS[item.uid]||{})[item.date];
+        if(!existing||existing===item.code){
+          _teamsQueue.push(item);
+          if(existing===item.code) autoAccepted++;
+        } else {
+          _teamsConflicts.push({...item,existing,choice:'use'});
+        }
+      });
+
+      // Stats
+      const statsEl=document.getElementById('teams-stats');
+      statsEl.style.display='block';
+      statsEl.innerHTML=`<div class="upload-progress">
+        ✅ Matched <b>${matched}</b> rows · ⚠️ Skipped <b>${skipped}</b> unknown emails · 🔄 <b>${_teamsConflicts.length}</b> conflicts · ✓ <b>${_teamsQueue.length}</b> auto-accepted
+      </div>`;
+
+      if(_teamsConflicts.length){
+        _buildConflictTable('teams');
+        document.getElementById('teams-conflict-wrap').style.display='block';
+        document.getElementById('teams-noconflict-wrap').style.display='none';
+      } else {
+        document.getElementById('teams-conflict-wrap').style.display='none';
+        document.getElementById('teams-noconflict-wrap').style.display='block';
+      }
+    }catch(err){
+      toast('Error parsing file: '+err.message,'error');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function _buildConflictTable(type){
+  const conflicts=type==='teams'?_teamsConflicts:_histConflicts;
+  const tbody=document.getElementById(type+'-conflict-body');
+  tbody.innerHTML='';
+  conflicts.forEach((c,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${c.name}</td>
+      <td>${c.date}</td>
+      <td><span class="shift-pill">${c.existing}</span></td>
+      <td><span class="shift-pill">${c.code||c.uploaded||''}</span></td>
+      <td>
+        <button class="conf-btn conf-keep" onclick="_pickConflict('${type}',${i},'keep')" id="ck-${type}-${i}" style="${c.choice==='keep'?'opacity:1':'opacity:.4'}">Keep</button>
+        <button class="conf-btn conf-use" onclick="_pickConflict('${type}',${i},'use')" id="cu-${type}-${i}" style="${c.choice==='use'?'opacity:1':'opacity:.4'}"> Use </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function _pickConflict(type,i,choice){
+  const conflicts=type==='teams'?_teamsConflicts:_histConflicts;
+  conflicts[i].choice=choice;
+  document.getElementById('ck-'+type+'-'+i).style.opacity=choice==='keep'?'1':'.4';
+  document.getElementById('cu-'+type+'-'+i).style.opacity=choice==='use'?'1':'.4';
+}
+
+function resolveAllConflicts(type,choice){
+  const conflicts=type==='teams'?_teamsConflicts:_histConflicts;
+  conflicts.forEach((_,i)=>_pickConflict(type,i,choice));
+}
+
+async function applyTeamsImport(){
+  const toWrite=[..._teamsQueue];
+  _teamsConflicts.filter(c=>c.choice==='use').forEach(c=>toWrite.push({uid:c.uid,date:c.date,code:c.code}));
+  if(!toWrite.length){toast('Nothing to save','warn');return;}
+  try{
+    const batch=db.batch();
+    toWrite.forEach(item=>{
+      const ref=db.collection('shifts').doc(item.uid);
+      batch.set(ref,{[item.date]:item.code},{merge:true});
+    });
+    await batch.commit();
+    // Refresh local SHIFTS
+    toWrite.forEach(item=>{
+      if(!SHIFTS[item.uid]) SHIFTS[item.uid]={};
+      SHIFTS[item.uid][item.date]=item.code;
+    });
+    toast(`✅ Saved ${toWrite.length} shifts`,'ok');
+    document.getElementById('teams-conflict-wrap').style.display='none';
+    document.getElementById('teams-noconflict-wrap').style.display='none';
+    document.getElementById('teams-stats').style.display='none';
+    document.getElementById('teamsFile').value='';
+    _teamsQueue=[];_teamsConflicts=[];
+  }catch(err){toast('Save failed: '+err.message,'error');}
+}
+
+// ══════════════════════════════════════
+// HISTORY MIGRATION — SheetJS parser
+// ══════════════════════════════════════
+function handleHistoryUpload(e){
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      // Find roster sheet
+      const sheetName=wb.SheetNames.find(n=>n.includes('Roster'))||wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+
+      // Build UID→planner map
+      const byUid={};
+      PLANNERS.forEach(p=>{ if(p.uid) byUid[p.uid.toString().trim()]=p; });
+
+      // Header row is index 3, data from index 4
+      const headerRow=rows[3]||[];
+      // Dates start at col 18 (index 18)
+      const DATE_START=18;
+      const dateCols=[];
+      for(let c=DATE_START;c<headerRow.length;c++){
+        const h=headerRow[c];
+        if(!h) continue;
+        let dateStr='';
+        if(typeof h==='number'){
+          const d=XLSX.SSF.parse_date_code(h);
+          dateStr=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+        } else {
+          const d=new Date(h);
+          if(!isNaN(d)) dateStr=d.toISOString().split('T')[0];
+          else dateStr=h.toString().trim();
+        }
+        dateCols.push({col:c,date:dateStr});
+      }
+
+      let matched=0,skipped=0;
+      const toProcess=[];
+
+      for(let r=4;r<rows.length;r++){
+        const row=rows[r];
+        const uid=(row[1]||'').toString().trim();
+        if(!uid) continue;
+        const planner=byUid[uid];
+        if(!planner){skipped++;continue;}
+        matched++;
+        dateCols.forEach(({col,date})=>{
+          const code=(row[col]||'').toString().trim();
+          if(!code) return;
+          toProcess.push({uid:planner.uid,name:(planner.firstName||'')+' '+(planner.lastName||''),date,code});
+        });
+      }
+
+      // Conflict detection
+      _histQueue=[];
+      _histConflicts=[];
+      toProcess.forEach(item=>{
+        const existing=(SHIFTS[item.uid]||{})[item.date];
+        if(!existing||existing===item.code){
+          _histQueue.push(item);
+        } else {
+          _histConflicts.push({...item,existing,choice:'use'});
+        }
+      });
+
+      const statsEl=document.getElementById('history-stats');
+      statsEl.style.display='block';
+      statsEl.innerHTML=`<div class="upload-progress">
+        ✅ Matched <b>${matched}</b> employees · ⚠️ Skipped <b>${skipped}</b> unknown UIDs · 🔄 <b>${_histConflicts.length}</b> conflicts · ✓ <b>${_histQueue.length}</b> entries ready
+      </div>`;
+
+      if(_histConflicts.length){
+        _buildConflictTable('history');
+        document.getElementById('history-conflict-wrap').style.display='block';
+        document.getElementById('history-noconflict-wrap').style.display='none';
+      } else {
+        document.getElementById('history-conflict-wrap').style.display='none';
+        document.getElementById('history-noconflict-wrap').style.display='block';
+      }
+    }catch(err){
+      toast('Error parsing file: '+err.message,'error');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+async function applyHistoryImport(){
+  const toWrite=[..._histQueue];
+  _histConflicts.filter(c=>c.choice==='use').forEach(c=>toWrite.push({uid:c.uid,date:c.date,code:c.code}));
+  if(!toWrite.length){toast('Nothing to save','warn');return;}
+  try{
+    // Batch writes — Firestore batch limit 500
+    const CHUNK=400;
+    for(let i=0;i<toWrite.length;i+=CHUNK){
+      const chunk=toWrite.slice(i,i+CHUNK);
+      const batch=db.batch();
+      chunk.forEach(item=>{
+        const ref=db.collection('shifts').doc(item.uid);
+        batch.set(ref,{[item.date]:item.code},{merge:true});
+      });
+      await batch.commit();
+    }
+    // Refresh local SHIFTS
+    toWrite.forEach(item=>{
+      if(!SHIFTS[item.uid]) SHIFTS[item.uid]={};
+      SHIFTS[item.uid][item.date]=item.code;
+    });
+    toast(`✅ Saved ${toWrite.length} historical shifts`,'ok');
+    document.getElementById('history-conflict-wrap').style.display='none';
+    document.getElementById('history-noconflict-wrap').style.display='none';
+    document.getElementById('history-stats').style.display='none';
+    document.getElementById('historyFile').value='';
+    _histQueue=[];_histConflicts=[];
+  }catch(err){toast('Save failed: '+err.message,'error');}
 }
 
 // ══════════════════════════════════════
@@ -1987,7 +2391,7 @@ function renderPayroll(){
 }
 
 // ══════════════════════════════════════
-// ORGANIGRAM
+// ORGANIGRAM — top-down hierarchical tree
 // ══════════════════════════════════════
 function renderOrganigram(){
   const el=document.getElementById('org-chart');
@@ -1995,34 +2399,126 @@ function renderOrganigram(){
   const active=PLANNERS.filter(p=>(p.status||'active')==='active');
   if(!active.length){el.innerHTML='<p style="color:var(--text3);padding:20px">No employees to display.</p>';return;}
 
-  // Group by job level
-  const levels={'L7':[],'L6':[],'L5':[],'L4':[],'L3':[],'L2':[],'L1':[],'':[]};
-  active.forEach(p=>{ const l=p.jobLevel||''; (levels[l]||(levels[l]=[])).push(p); });
-
-  const levelLabels={'L7':'L7','L6':'L6','L5':'L5','L4':'L4','L3':'L3','L2':'L2','L1':'L1','':'No Level Assigned'};
-  const orderedLevels=['L7','L6','L5','L4','L3','L2','L1',''];
-
-  let html='<div style="font-family:inherit">';
-  orderedLevels.forEach(lv=>{
-    const grp=levels[lv];
-    if(!grp||!grp.length) return;
-    html+=`<div style="margin-bottom:24px">
-      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:4px">${levelLabels[lv]}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px">`;
-    grp.forEach(p=>{
-      const mgr=active.find(x=>x.uid===p.reportsTo);
-      const mgrLabel=mgr?`Reports to: ${mgr.firstName||''} ${mgr.lastName||''}`:'No reporting line';
-      html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:160px;max-width:200px">
-        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${p.firstName||''} ${p.lastName||''}</div>
-        <div style="font-size:10px;color:var(--text2);margin-bottom:4px">${p.uid}</div>
-        <div style="margin-bottom:4px">${posBadge(p.position)}</div>
-        <div style="font-size:9px;color:var(--text3)">${mgrLabel}</div>
-      </div>`;
-    });
-    html+='</div></div>';
+  // Build children map
+  const childMap={};
+  active.forEach(p=>{
+    const mgr=p.reportsTo||'__root__';
+    if(!childMap[mgr]) childMap[mgr]=[];
+    childMap[mgr].push(p);
   });
-  html+='</div>';
+
+  // Find roots: employees whose reportsTo is empty, or points to someone not in active list
+  const activeUids=new Set(active.map(p=>p.uid));
+  const roots=active.filter(p=>!p.reportsTo||!activeUids.has(p.reportsTo));
+
+  function buildNode(p,depth){
+    const children=childMap[p.uid]||[];
+    const isRoot=depth===0;
+    const jl=p.jobLevel?`<span style="font-size:9px;background:var(--accent2);color:#fff;border-radius:3px;padding:1px 5px;margin-left:4px">${p.jobLevel}</span>`:'';
+    let html=`<div class="org-branch">
+      <div class="org-node${isRoot?' org-root-highlight':''}">
+        <div class="org-node-name">${p.firstName||''} ${p.lastName||''}${jl}</div>
+        <div style="font-size:9px;color:var(--text3);margin-bottom:4px">${p.uid}</div>
+        ${posBadge(p.position)}
+      </div>`;
+    if(children.length){
+      html+=`<div class="org-v-line"></div>
+      <div class="org-h-wrap" style="--count:${children.length}">`;
+      children.forEach(c=>{
+        html+=`<div style="display:flex;flex-direction:column;align-items:center">
+          <div class="org-branch-line"></div>
+          ${buildNode(c,depth+1)}
+        </div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+    return html;
+  }
+
+  let html=`<div style="display:flex;gap:40px;justify-content:flex-start;flex-wrap:wrap;align-items:flex-start">`;
+  if(roots.length){
+    roots.forEach(r=>{ html+=buildNode(r,0); });
+  } else {
+    // Fallback: all active with no manager
+    active.forEach(p=>{ html+=buildNode(p,0); });
+  }
+  html+=`</div>`;
   el.innerHTML=html;
+
+  // Fix horizontal connector lines
+  el.querySelectorAll('.org-h-wrap').forEach(wrap=>{
+    const children=wrap.children;
+    if(children.length<2) return;
+    const first=children[0].getBoundingClientRect();
+    const last=children[children.length-1].getBoundingClientRect();
+    const wrapRect=wrap.getBoundingClientRect();
+    const left=first.left+first.width/2-wrapRect.left;
+    const right=last.left+last.width/2-wrapRect.left;
+    const line=document.createElement('div');
+    line.style.cssText=`position:absolute;top:0;left:${left}px;width:${right-left}px;height:2px;background:var(--border2)`;
+    wrap.appendChild(line);
+  });
+}
+
+// ══════════════════════════════════════
+// EMPLOYEE PAGE TABS
+// ══════════════════════════════════════
+function switchEmpTab(tab){
+  const isList=tab==='list';
+  document.getElementById('emp-list-tab').style.display=isList?'':'none';
+  document.getElementById('emp-registry-tab').style.display=isList?'none':'flex';
+  document.getElementById('emp-filters').style.display=isList?'':'none';
+  document.getElementById('reg-filters').style.display=isList?'none':'';
+  document.getElementById('btn-add-emp').style.display=isList?'':'none';
+  document.getElementById('dtab-list').classList.toggle('active',isList);
+  document.getElementById('dtab-registry').classList.toggle('active',!isList);
+  if(!isList) renderRegistry();
+}
+
+function renderRegistry(){
+  const grid=document.getElementById('registry-grid');
+  if(!grid) return;
+  const typeF=document.getElementById('reg-type-fil')?.value||'';
+  const yearF=document.getElementById('reg-year-fil')?.value||'';
+
+  const typeIcon={hired:'🟢',promoted:'🔵',resigned:'🟡',terminated:'🔴'};
+  const typeLabel={hired:'Hired',promoted:'Promoted',resigned:'Resigned',terminated:'Terminated'};
+
+  // Collect all history events across all planners
+  const allEvents=[];
+  PLANNERS.forEach(p=>{
+    const hist=p.history||[];
+    hist.forEach(ev=>{
+      if(typeF && ev.type!==typeF) return;
+      if(yearF && !(ev.date||'').startsWith(yearF)) return;
+      allEvents.push({...ev, empName:(p.firstName||'')+' '+(p.lastName||''), uid:p.uid, position:p.position});
+    });
+  });
+
+  // Sort newest first
+  allEvents.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  if(!allEvents.length){
+    grid.innerHTML='<div style="padding:32px;color:var(--text3);text-align:center;grid-column:1/-1">No events found for the selected filters.</div>';
+    return;
+  }
+
+  grid.innerHTML=allEvents.map(ev=>{
+    const icon=typeIcon[ev.type]||'⚪';
+    const label=typeLabel[ev.type]||ev.type;
+    const extra=ev.type==='promoted'?`<div style="font-size:10px;color:var(--text2);margin-top:2px">→ ${ev.position||ev.newPosition||''} ${ev.jobLevel||ev.newJobLevel?'('+( ev.newJobLevel||ev.jobLevel)+')':''}</div>`:
+      ev.type==='resigned'||ev.type==='terminated'?`<div style="font-size:10px;color:var(--text2);margin-top:2px">Reason: ${ev.reason||'—'}</div>`:'';
+    const notes=ev.notes?`<div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic">"${ev.notes}"</div>`:'';
+    return `<div class="registry-card">
+      <div style="font-size:22px;line-height:1">${icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:12px">${ev.empName} <span style="font-weight:400;color:var(--text3)">(${ev.uid})</span></div>
+        <div style="font-size:10px;font-weight:600;color:var(--accent);margin-bottom:2px">${label} · ${ev.date||'—'}</div>
+        ${extra}${notes}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════
