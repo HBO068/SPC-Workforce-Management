@@ -249,10 +249,11 @@ tbody tr:hover td{background:var(--bg3)}
 .fte-tbl td.need-cell input{width:36px;text-align:center;border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text);font-family:inherit}
 .fte-tbl td.need-cell input:focus{outline:1px solid var(--accent);border-radius:3px}
 .fte-actual{font-weight:700;color:var(--accent)}
-.fte-gap-pos{color:#16A34A;font-weight:700}
-.fte-gap-neg{color:#DC2626;font-weight:700}
-.fte-gap-zero{color:var(--text3)}
+.fte-gap-pos{color:#16A34A;font-weight:700;text-align:center;background:#F0FDF4}
+.fte-gap-neg{color:#DC2626;font-weight:700;text-align:center;background:#FEF2F2}
+.fte-gap-zero{color:var(--text3);text-align:center}
 .fte-row-need{background:var(--bg2)}
+.fte-row-total td{background:#EFF6FF;font-weight:700;text-align:center;border-top:2px solid var(--border)}
 .fte-row-actual{background:#F0FDF4}
 .fte-row-gap{background:#FFF8F8}
 .fte-event-row td{padding:3px 6px;font-size:10px;font-weight:700}
@@ -2077,12 +2078,19 @@ function renderTurnaround(){
   }
 
   // Events per month: hired/resigned/terminated/promoted — based on history array
-  function eventsInMonth(y,m){
+  // role: 'ops' = Operations Planner, 'sup' = Planning Supervisor
+  function eventsInMonth(y,m,role){
     const ev={hired:0,resigned:0,terminated:0,promoted:0};
     const yStr=String(y);
     const mStr=String(m+1).padStart(2,'0');
     const prefix=`${yStr}-${mStr}`;
     PLANNERS.forEach(p=>{
+      // Filter by current position for the role
+      const pos=(p.position||'').toLowerCase();
+      const isOps=pos.includes('operations planner')||pos.includes('ops planner');
+      const isSup=pos.includes('supervisor');
+      if(role==='ops'&&!isOps) return;
+      if(role==='sup'&&!isSup) return;
       (p.history||[]).forEach(h=>{
         if((h.date||'').startsWith(prefix)){
           if(h.type==='hired') ev.hired++;
@@ -2111,74 +2119,85 @@ function renderTurnaround(){
   const terminals=FTE_DATA.terminals||[];
   const yearNeeds=(FTE_DATA.needs||{})[y]||{};
 
-  function gapClass(g){ return g>0?'fte-gap-pos':g<0?'fte-gap-neg':'fte-gap-zero'; }
+  function gapClass(g){ return g>=0?'fte-gap-pos':'fte-gap-neg'; }
   function gapSign(g){ return g>0?'+'+g:g; }
 
-  function buildTable(label, actualArr, roleKey){
-    const months=MONTHS;
-    // Header
+  // ── OPS Planners table ──
+  function buildOpsTable(){
     let h=`<div class="fte-section">
       <div class="fte-section-title">
-        ${label}
-        <span style="font-weight:400;font-size:10px;opacity:.8;margin-left:auto">Need = enter per terminal · Actual = live headcount · Gap = Need − Actual</span>
+        OPS Planners
+        <span style="font-weight:400;font-size:10px;opacity:.8;margin-left:auto">Need = enter per terminal · Actual = live headcount · Gap = Total Need − Actual</span>
       </div>
       <div class="fte-tbl-wrap"><table class="fte-tbl">
         <thead><tr>
           <th class="row-hdr">Terminal</th>
-          ${months.map(m=>`<th>${m}</th>`).join('')}
+          ${MONTHS.map(m=>`<th>${m}</th>`).join('')}
         </tr></thead><tbody>`;
 
-    // Need rows per terminal
-    terminals.forEach(term=>{
-      const termNeeds=(yearNeeds[term]||{});
-      h+=`<tr class="fte-row-need">
-        <td class="row-hdr">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <span>${term}</span>
-            <button onclick="removeTerminal('${term}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px" title="Remove">×</button>
-          </div>
-          <div style="font-size:9px;color:var(--text3);font-weight:400">Need</div>
-        </td>`;
-      for(let m=0;m<12;m++){
-        const val=termNeeds[m]!==undefined?termNeeds[m]:'';
-        h+=`<td class="need-cell"><input type="number" min="0" value="${val}" onchange="saveNeed('${term}',${m},${y},this.value,'${roleKey}')" placeholder="—"></td>`;
-      }
-      h+=`</tr>`;
-
-      // Actual row
-      h+=`<tr class="fte-row-actual"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600;padding-left:20px">Actual</td>`;
-      for(let m=0;m<12;m++){
-        h+=`<td class="fte-actual">${actualArr[m]}</td>`;
-      }
-      h+=`</tr>`;
-
-      // Gap row
-      h+=`<tr class="fte-row-gap"><td class="row-hdr" style="font-size:9px;color:var(--text3);padding-left:20px">Gap</td>`;
-      for(let m=0;m<12;m++){
-        const need=termNeeds[m]!==undefined?parseInt(termNeeds[m])||0:null;
-        if(need===null){ h+=`<td class="fte-gap-zero">—</td>`; }
-        else{
-          const gap=need-actualArr[m];
-          h+=`<td class="${gapClass(gap)}">${gapSign(gap)}</td>`;
+    // One Need row per terminal
+    if(terminals.length){
+      terminals.forEach(term=>{
+        const termNeeds=(yearNeeds[term]||{});
+        h+=`<tr class="fte-row-need">
+          <td class="row-hdr">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span>${term}</span>
+              <button onclick="removeTerminal('${term}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px" title="Remove">×</button>
+            </div>
+            <div style="font-size:9px;color:var(--text3);font-weight:400">Need</div>
+          </td>`;
+        for(let m=0;m<12;m++){
+          const val=termNeeds[m]!==undefined?termNeeds[m]:'';
+          h+=`<td class="need-cell"><input type="number" min="0" value="${val}" onchange="saveNeed('${term}',${m},${y},this.value)" placeholder="—"></td>`;
         }
-      }
-      h+=`</tr>`;
-    });
-
-    if(!terminals.length){
-      h+=`<tr><td class="row-hdr" style="color:var(--text3);font-style:italic">No terminals yet</td>${months.map(()=>'<td>—</td>').join('')}</tr>`;
+        h+=`</tr>`;
+      });
+    } else {
+      h+=`<tr><td class="row-hdr" style="color:var(--text3);font-style:italic">No terminals yet</td>${MONTHS.map(()=>'<td>—</td>').join('')}</tr>`;
     }
 
-    // Separator
-    h+=`<tr style="height:6px"><td colspan="13" style="border:none;background:var(--bg)"></td></tr>`;
+    // Total Planners Needed row
+    h+=`<tr class="fte-row-total"><td class="row-hdr" style="font-size:10px;font-weight:700;color:var(--text1)">Total Planners Needed</td>`;
+    const totalNeeds=[];
+    for(let m=0;m<12;m++){
+      let sum=0; let hasAny=false;
+      terminals.forEach(term=>{
+        const v=(yearNeeds[term]||{})[m];
+        if(v!==undefined){sum+=parseInt(v)||0;hasAny=true;}
+      });
+      totalNeeds.push(hasAny?sum:null);
+      h+=`<td style="font-weight:700;text-align:center;background:var(--bg2)">${hasAny?sum:'—'}</td>`;
+    }
+    h+=`</tr>`;
 
-    // Events rows
+    // Actual row
+    h+=`<tr class="fte-row-actual"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600">Actual</td>`;
+    for(let m=0;m<12;m++){
+      h+=`<td class="fte-actual">${opsActual[m]}</td>`;
+    }
+    h+=`</tr>`;
+
+    // Gap row
+    h+=`<tr class="fte-row-gap"><td class="row-hdr" style="font-size:9px;color:var(--text3)">Gap</td>`;
+    for(let m=0;m<12;m++){
+      const need=totalNeeds[m];
+      if(need===null){ h+=`<td style="text-align:center;color:var(--text3)">—</td>`; }
+      else{
+        const gap=need-opsActual[m];
+        h+=`<td class="${gapClass(gap)}">${gapSign(gap)}</td>`;
+      }
+    }
+    h+=`</tr>`;
+
+    // Separator + events
+    h+=`<tr style="height:6px"><td colspan="13" style="border:none;background:var(--bg)"></td></tr>`;
     const evColors={hired:'fte-ev-hired',resigned:'fte-ev-resigned',terminated:'fte-ev-terminated',promoted:'fte-ev-promoted'};
     const evLabels={hired:'🟢 Hired',resigned:'🟡 Resigned',terminated:'🔴 Terminated',promoted:'🔵 Promoted'};
     ['hired','resigned','terminated','promoted'].forEach(type=>{
       h+=`<tr class="fte-event-row"><td class="row-hdr ${evColors[type]}" style="font-size:10px">${evLabels[type]}</td>`;
       for(let m=0;m<12;m++){
-        const ev=eventsInMonth(y,m);
+        const ev=eventsInMonth(y,m,'ops');
         const count=ev[type];
         h+=`<td class="${count?evColors[type]:'fte-ev-empty'}">${count||'—'}</td>`;
       }
@@ -2195,9 +2214,66 @@ function renderTurnaround(){
     return h;
   }
 
-  body.innerHTML=
-    buildTable('OPS Planners', opsActual, 'ops') +
-    buildTable('Supervisors', supActual, 'sup');
+  // ── Supervisors table ──
+  function buildSupTable(){
+    const supNeeds=(yearNeeds['__sup__']||{});
+    let h=`<div class="fte-section">
+      <div class="fte-section-title">
+        Supervisors
+        <span style="font-weight:400;font-size:10px;opacity:.8;margin-left:auto">Need = enter per month · Actual = live headcount · Gap = Need − Actual</span>
+      </div>
+      <div class="fte-tbl-wrap"><table class="fte-tbl">
+        <thead><tr>
+          <th class="row-hdr"></th>
+          ${MONTHS.map(m=>`<th>${m}</th>`).join('')}
+        </tr></thead><tbody>`;
+
+    // Single Need row
+    h+=`<tr class="fte-row-need"><td class="row-hdr" style="font-size:9px;color:var(--text3);font-weight:600">Need</td>`;
+    for(let m=0;m<12;m++){
+      const val=supNeeds[m]!==undefined?supNeeds[m]:'';
+      h+=`<td class="need-cell"><input type="number" min="0" value="${val}" onchange="saveNeed('__sup__',${m},${y},this.value)" placeholder="—"></td>`;
+    }
+    h+=`</tr>`;
+
+    // Actual
+    h+=`<tr class="fte-row-actual"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600">Actual</td>`;
+    for(let m=0;m<12;m++){
+      h+=`<td class="fte-actual">${supActual[m]}</td>`;
+    }
+    h+=`</tr>`;
+
+    // Gap
+    h+=`<tr class="fte-row-gap"><td class="row-hdr" style="font-size:9px;color:var(--text3)">Gap</td>`;
+    for(let m=0;m<12;m++){
+      const need=supNeeds[m]!==undefined?parseInt(supNeeds[m])||0:null;
+      if(need===null){ h+=`<td style="text-align:center;color:var(--text3)">—</td>`; }
+      else{
+        const gap=need-supActual[m];
+        h+=`<td class="${gapClass(gap)}">${gapSign(gap)}</td>`;
+      }
+    }
+    h+=`</tr>`;
+
+    // Separator + events
+    h+=`<tr style="height:6px"><td colspan="13" style="border:none;background:var(--bg)"></td></tr>`;
+    const evColors={hired:'fte-ev-hired',resigned:'fte-ev-resigned',terminated:'fte-ev-terminated',promoted:'fte-ev-promoted'};
+    const evLabels={hired:'🟢 Hired',resigned:'🟡 Resigned',terminated:'🔴 Terminated',promoted:'🔵 Promoted'};
+    ['hired','resigned','terminated','promoted'].forEach(type=>{
+      h+=`<tr class="fte-event-row"><td class="row-hdr ${evColors[type]}" style="font-size:10px">${evLabels[type]}</td>`;
+      for(let m=0;m<12;m++){
+        const ev=eventsInMonth(y,m,'sup');
+        const count=ev[type];
+        h+=`<td class="${count?evColors[type]:'fte-ev-empty'}">${count||'—'}</td>`;
+      }
+      h+=`</tr>`;
+    });
+
+    h+=`</tbody></table></div></div>`;
+    return h;
+  }
+
+  body.innerHTML = buildOpsTable() + buildSupTable();
 }
 
 async function saveNeed(terminal, month, year, value){
@@ -2207,7 +2283,7 @@ async function saveNeed(terminal, month, year, value){
   const v=parseInt(value);
   if(isNaN(v)||value===''){ delete FTE_DATA.needs[year][terminal][month]; }
   else{ FTE_DATA.needs[year][terminal][month]=v; }
-  try{ await saveFTEData(); }catch(e){ toast('Could not save need: '+e.message,'error'); }
+  try{ await saveFTEData(); renderTurnaround(); }catch(e){ toast('Could not save need: '+e.message,'error'); }
 }
 
 function openAddTerminal(){
@@ -2428,20 +2504,25 @@ function _parseHistDate(h){
 }
 
 async function _parseHistoryAsync(arrayBuffer, busyEl){
-  const updateBusy=(msg)=>{ if(busyEl){busyEl.style.display='block';busyEl.innerHTML='<span style="display:inline-block;margin-right:6px">⏳</span>'+msg;} };
+  function updateBusy(msg, pct){
+    if(!busyEl) return;
+    busyEl.style.display='block';
+    const bar=pct!==undefined?`<div style="margin-top:8px;background:var(--border);border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--accent);transition:width .2s"></div></div><div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right">${Math.round(pct)}%</div>`:'';
+    busyEl.innerHTML=`<div style="font-size:12px;font-weight:600;margin-bottom:4px">⏳ ${msg}</div>${bar}`;
+  }
   try{
-    updateBusy('Reading file…');
+    updateBusy('Reading file…', 2);
     await _yield();
 
     // cellDates:true so SheetJS returns JS Date objects for date cells (not serials)
     const wb=XLSX.read(arrayBuffer,{type:'array', cellDates:true, sheetStubs:false});
-    updateBusy('Identifying sheet…');
+    updateBusy('Identifying sheet…', 8);
     await _yield();
 
     const sheetName=wb.SheetNames.find(n=>n.includes('Roster'))||wb.SheetNames[0];
     const ws=wb.Sheets[sheetName];
 
-    updateBusy('Converting rows…');
+    updateBusy('Converting rows…', 14);
     await _yield();
 
     // raw:false so dates come through as Date objects via cellDates
@@ -2458,18 +2539,15 @@ async function _parseHistoryAsync(arrayBuffer, busyEl){
     for(let c=DATE_START;c<headerRow.length;c++){
       const h=headerRow[c];
       if(h===null||h===undefined||h==='') continue;
-      // With raw:false + cellDates:true, dates come as formatted strings like "1/1/21" or ISO
-      // Try both: if it's already a date string parse it, else use _parseHistDate
       const dateStr=_parseHistDate(h);
       if(!dateStr) continue;
       dateCols.push({col:c,date:dateStr});
     }
 
-    updateBusy(`Found ${dateCols.length} date columns. Processing employees…`);
+    updateBusy(`Found ${dateCols.length} date columns — scanning employees…`, 22);
     await _yield();
 
     // Build UID map directly from sheet col 1 (rows 4+) to catch exact format used
-    // Also try matching with the ws cell address approach for reliability
     const ws2=wb.Sheets[sheetName];
     const rowsRaw=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null,raw:true});
 
@@ -2481,7 +2559,6 @@ async function _parseHistoryAsync(arrayBuffer, busyEl){
       if(h===null||h===undefined||h==='') continue;
       let dateStr='';
       if(typeof h==='number'){
-        // Excel serial — convert
         try{
           const d=XLSX.SSF.parse_date_code(h);
           dateStr=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
@@ -2497,7 +2574,8 @@ async function _parseHistoryAsync(arrayBuffer, busyEl){
     // Use whichever gave us more dates
     const finalDateCols=dateColsRaw.length>=dateCols.length?dateColsRaw:dateCols;
 
-    updateBusy(`Processing ${rowsRaw.length-4} employees across ${finalDateCols.length} dates…`);
+    const totalRows=rowsRaw.length-4;
+    updateBusy(`Processing ${totalRows} employees across ${finalDateCols.length} dates…`, 30);
     await _yield();
 
     let matched=0, skipped=0;
@@ -2521,12 +2599,13 @@ async function _parseHistoryAsync(arrayBuffer, busyEl){
         toProcess.push({uid:planner.uid,name:(planner.firstName||'')+' '+(planner.lastName||''),date,code});
       });
       if((r-4)%CHUNK===0){
-        updateBusy(`Processing… ${r-3}/${rowsRaw.length-4} employees · ${toProcess.length} shifts found`);
+        const pct=30+Math.round(((r-4)/Math.max(totalRows,1))*55);
+        updateBusy(`Processing employee ${r-3} of ${totalRows} · ${toProcess.length} shifts found`, pct);
         await _yield();
       }
     }
 
-    updateBusy('Checking conflicts…');
+    updateBusy('Checking conflicts…', 88);
     await _yield();
 
     _histQueue=[];
