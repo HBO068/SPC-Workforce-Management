@@ -251,6 +251,25 @@ tbody tr:hover td{background:var(--bg3)}
 
 /* Resign/Term modal */
 .sep-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border);display:block}
+
+/* ── HISTORY TIMELINE ── */
+.hist-timeline{padding:4px 0}
+.hist-event{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);position:relative}
+.hist-event:last-child{border-bottom:none}
+.hist-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;margin-top:2px}
+.hd-hire{background:#D1FAE5;color:#065F46}
+.hd-promote{background:#DBEAFE;color:#1D4ED8}
+.hd-exit{background:#FEE2E2;color:#991B1B}
+.hist-body{flex:1}
+.hist-type{font-size:11px;font-weight:700;color:var(--text)}
+.hist-date{font-size:10px;color:var(--text3);margin-bottom:3px}
+.hist-detail{font-size:11px;color:var(--text2)}
+.hist-note{font-size:10px;color:var(--text3);margin-top:2px;font-style:italic}
+/* Promote button */
+.btn.promote{background:#EEF4FF;color:#1D4ED8;border-color:#BFDBFE}
+.btn.promote:hover{background:#DBEAFE}
+/* Roster locked cell */
+.locked-cell{background:#F8FAFC!important;opacity:.35;pointer-events:none}
 </style>
 
 <!-- LOGIN -->
@@ -764,6 +783,60 @@ tbody tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
+<!-- PROMOTE MODAL -->
+<div class="mbg" id="modal-promote">
+  <div class="modal" style="width:420px">
+    <h3 id="promote-title">⬆️ Register Promotion</h3>
+    <div class="fl">
+      <label class="lbl">Promotion Date</label>
+      <input type="date" id="promote-date" style="width:100%">
+    </div>
+    <div class="fl">
+      <label class="lbl">New Position</label>
+      <select id="promote-pos" style="width:100%">
+        <option>Operations Planner</option>
+        <option>Planning Supervisor</option>
+        <option>Planning Capabilities Lead</option>
+        <option>Planning Manager</option>
+        <option>Head of COE</option>
+        <option>Data Analyst</option>
+      </select>
+    </div>
+    <div class="fl">
+      <label class="lbl">New Job Level</label>
+      <select id="promote-level" style="width:100%">
+        <option value="">— Same / No change —</option>
+        <option value="L1">L1</option>
+        <option value="L2">L2</option>
+        <option value="L3">L3</option>
+        <option value="L4">L4</option>
+        <option value="L5">L5</option>
+        <option value="L6">L6</option>
+        <option value="L7">L7</option>
+      </select>
+    </div>
+    <div class="fl">
+      <label class="lbl">Notes</label>
+      <textarea id="promote-notes" placeholder="Optional…" style="height:56px"></textarea>
+    </div>
+    <div class="ma">
+      <button class="btn" onclick="closeModal('modal-promote')">Cancel</button>
+      <button class="btn promote" onclick="savePromotion()">Confirm Promotion</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="mbg" id="modal-history">
+  <div class="modal" style="width:500px">
+    <h3 id="hist-title">📋 Employee History</h3>
+    <div id="hist-content" class="hist-timeline"></div>
+    <div class="ma">
+      <button class="btn primary" onclick="closeModal('modal-history')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -794,6 +867,7 @@ let rosterYear  = 2026;
 let workingYear = 2026;
 let editingUID  = null;
 let exitUID     = null;
+let promoteUID  = null;
 
 // downloads capability
 let _dl = null;
@@ -993,7 +1067,9 @@ function renderPlanners(){
       <td>${statusPill(pst)}</td>
       <td style="white-space:nowrap">
         <button class="btn sm" onclick="editPlanner('${p.uid}')">Edit</button>
+        ${pst==='active'?`<button class="btn sm promote" onclick="openPromote('${p.uid}')">⬆ Promote</button>`:''}
         ${pst==='active'?`<button class="btn sm danger" onclick="openExit('${p.uid}')">Exit</button>`:''}
+        <button class="btn sm navy" onclick="openHistory('${p.uid}')">📋</button>
       </td>
     </tr>`;
   }).join('');
@@ -1122,6 +1198,15 @@ async function savePlanner(){
       }
       data.order = PLANNERS.length;
       data.createdAt = new Date().toISOString();
+      // Auto-create hire history event
+      data.history = [{
+        type:'hired',
+        date: hd||new Date().toISOString().split('T')[0],
+        position: data.position,
+        jobLevel: data.jobLevel||'',
+        notes:'Employee registered',
+        recordedAt: new Date().toISOString()
+      }];
       await db.collection('planners').add(data);
       toast('Employee added ✓');
     }
@@ -1167,6 +1252,16 @@ async function saveExit(){
   const date   = document.getElementById('exit-date').value;
   const reason = document.getElementById('exit-reason').value;
   const notes  = document.getElementById('exit-notes').value.trim();
+  // Build history event
+  const exitEvent = {
+    type: type, // 'resigned' or 'terminated'
+    date: date,
+    reason: reason,
+    notes: notes,
+    recordedAt: new Date().toISOString()
+  };
+  const history = Array.isArray(p.history) ? [...p.history] : _buildInitialHistory(p);
+  history.push(exitEvent);
   try{
     await db.collection('planners').doc(p._id).update({
       status: type,
@@ -1174,6 +1269,7 @@ async function saveExit(){
       exitReason: reason,
       exitNotes: notes,
       exitYear: date ? parseInt(date.split('-')[0]) : new Date().getFullYear(),
+      history: history,
     });
     toast(`${type==='resigned'?'Resignation':'Termination'} registered ✓`);
     closeModal('modal-exit');
@@ -1181,6 +1277,111 @@ async function saveExit(){
     renderPlanners();
     renderTurnaround();
   } catch(e){ toast(e.message,'err'); }
+}
+
+// Build initial history array (hire event) for employees without history
+function _buildInitialHistory(p){
+  const events=[];
+  if(p.hireDate){
+    let hd=p.hireDate;
+    if(hd && hd.toDate) hd=hd.toDate().toISOString().split('T')[0];
+    events.push({type:'hired', date:hd, position:p.position, jobLevel:p.jobLevel||'', notes:'Initial hire record'});
+  }
+  return events;
+}
+
+// ══════════════════════════════════════
+// PROMOTE
+// ══════════════════════════════════════
+function openPromote(uid){
+  promoteUID=uid;
+  const p=PLANNERS.find(x=>x.uid===uid);
+  document.getElementById('promote-title').textContent=`⬆️ Promote — ${p?.firstName||''} ${p?.lastName||''}`;
+  document.getElementById('promote-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('promote-pos').value=p?.position||'Operations Planner';
+  document.getElementById('promote-level').value=p?.jobLevel||'';
+  document.getElementById('promote-notes').value='';
+  openModal('modal-promote');
+}
+
+async function savePromotion(){
+  if(!promoteUID) return;
+  const p=PLANNERS.find(x=>x.uid===promoteUID);
+  if(!p){ toast('Not found','err'); return; }
+  const date=document.getElementById('promote-date').value;
+  const newPos=document.getElementById('promote-pos').value;
+  const newLevel=document.getElementById('promote-level').value;
+  const notes=document.getElementById('promote-notes').value.trim();
+  if(!date){ toast('Promotion date is required','err'); return; }
+  const promEvent={
+    type:'promoted',
+    date:date,
+    fromPosition:p.position||'',
+    toPosition:newPos,
+    fromLevel:p.jobLevel||'',
+    toLevel:newLevel,
+    notes:notes,
+    recordedAt:new Date().toISOString()
+  };
+  const history=Array.isArray(p.history) ? [...p.history] : _buildInitialHistory(p);
+  history.push(promEvent);
+  const upd={ position:newPos, history:history };
+  if(newLevel) upd.jobLevel=newLevel;
+  try{
+    await db.collection('planners').doc(p._id).update(upd);
+    toast(`Promotion recorded ✓ — ${p.firstName} is now ${newPos}`);
+    closeModal('modal-promote');
+    await loadPlanners();
+    renderPlanners();
+  } catch(e){ toast(e.message,'err'); }
+}
+
+// ══════════════════════════════════════
+// HISTORY MODAL
+// ══════════════════════════════════════
+function openHistory(uid){
+  const p=PLANNERS.find(x=>x.uid===uid);
+  if(!p) return;
+  document.getElementById('hist-title').textContent=`📋 ${p.firstName||''} ${p.lastName||''} — Career History`;
+  // Build events list — combine stored history with current data
+  let events=Array.isArray(p.history) ? [...p.history] : _buildInitialHistory(p);
+  // If no hire event exists, prepend one
+  if(!events.find(e=>e.type==='hired') && p.hireDate){
+    let hd=p.hireDate;
+    if(hd && hd.toDate) hd=hd.toDate().toISOString().split('T')[0];
+    events.unshift({type:'hired', date:hd, position:p.position, jobLevel:p.jobLevel||''});
+  }
+  // Sort by date
+  events.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(!events.length){
+    document.getElementById('hist-content').innerHTML='<p style="color:var(--text3);text-align:center;padding:20px">No history recorded yet.</p>';
+    openModal('modal-history');
+    return;
+  }
+  const icons={hired:'🟢',promoted:'🔵',resigned:'🔴',terminated:'🔴'};
+  const dotCls={hired:'hd-hire',promoted:'hd-promote',resigned:'hd-exit',terminated:'hd-exit'};
+  const labels={hired:'Hired',promoted:'Promoted',resigned:'Resigned',terminated:'Terminated'};
+  let html=events.map(ev=>{
+    const icon=icons[ev.type]||'⚪';
+    const dc=dotCls[ev.type]||'hd-hire';
+    const lbl=labels[ev.type]||ev.type;
+    let detail='';
+    if(ev.type==='hired') detail=`<span>Position: <b>${ev.position||'—'}</b>${ev.jobLevel?' · Level: '+ev.jobLevel:''}</span>`;
+    else if(ev.type==='promoted') detail=`<span>${ev.fromPosition||'—'} → <b>${ev.toPosition||'—'}</b>${ev.toLevel?' · Level: '+ev.toLevel:''}</span>`;
+    else if(ev.type==='resigned'||ev.type==='terminated') detail=`<span>Reason: <b>${ev.reason||'—'}</b></span>`;
+    const noteHtml=ev.notes?`<div class="hist-note">${ev.notes}</div>`:'';
+    return `<div class="hist-event">
+      <div class="hist-dot ${dc}">${icon}</div>
+      <div class="hist-body">
+        <div class="hist-type">${lbl}</div>
+        <div class="hist-date">${ev.date||'—'}</div>
+        <div class="hist-detail">${detail}</div>
+        ${noteHtml}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('hist-content').innerHTML=html;
+  openModal('modal-history');
 }
 
 // ══════════════════════════════════════
@@ -1285,11 +1486,25 @@ function renderRoster(){
     for(let d=1;d<=last;d++) dates.push(new Date(y,sel,d));
   }
 
+  // For roster: active employees always shown. Exited employees shown only in the month they exited (and prior).
+  // If viewing a specific month, hide employees whose exit was before that month.
+  // If viewing full year, show exited employees but lock cells after exit date.
   const planners = PLANNERS.filter(p=>{
     const pst=p.status||'active';
-    const matchSt = stFil==='all' ? true : pst==='active';
+    if(p.position==='Head of COE') return false;
     const matchQ  = !q || ((p.firstName||'')+(p.lastName||'')+(p.uid||'')).toLowerCase().includes(q);
-    return matchSt && matchQ && p.position!=='Head of COE';
+    if(!matchQ) return false;
+    if(stFil==='active' && pst!=='active'){
+      // For exited employees: include only if their exit month >= viewed month range
+      if(!p.exitDate) return false;
+      const exitD=new Date(p.exitDate+'T00:00:00');
+      const exitYear=exitD.getFullYear();
+      if(exitYear !== rosterYear) return exitYear > rosterYear ? false : false; // hide other years
+      // If showing a specific month, only include if exit month >= sel
+      if(!isNaN(sel) && exitD.getMonth() < sel) return false;
+      return true;
+    }
+    return true;
   });
 
   // PH bar
@@ -1345,14 +1560,24 @@ function renderRoster(){
       body+=`<td class="sc f1"><div class="emp-cell"><div class="emp-name">${p.firstName||''} ${p.lastName||''}</div><div class="emp-meta">${p.payrollId||''}</div></div></td>`;
       body+=`<td class="sc f2" style="font-family:monospace;font-size:9px;font-weight:700;color:var(--accent);text-align:center">${p.uid||''}</td>`;
       body+=`<td class="sc f3" style="font-size:9px;text-align:center">${(p.position||'').replace('Operations Planner','OPS').replace('Planning Manager','MGR').replace('Planning Supervisor','SUP').replace('Planning Capabilities Lead','PCL')}</td>`;
+      // Determine exit date for cell locking
+      let exitD=null;
+      if(p.exitDate){
+        exitD=new Date(p.exitDate+'T00:00:00');
+      }
       dates.forEach(d=>{
         const ds=dateKey(d);
         const wd=d.getDay(); const isWe=wd===0||wd===6; const isPH=!!HOLIDAYS[ds];
-        const cellCls=(isPH?'ph-cell':isWe?'we-cell':'')+(d.getDate()===1?' ms':'');
+        const afterExit=exitD && d > exitD;
+        const cellCls=(afterExit?'locked-cell ':(isPH?'ph-cell':isWe?'we-cell':''))+(d.getDate()===1?' ms':'');
         const code=getShift(p,ds);
-        body+=`<td class="${cellCls}" onclick="openEP(this,'${p.uid}','${ds}')">`;
-        if(code) body+=cellPill(code,p.uid,ds);
-        body+=`</td>`;
+        if(afterExit){
+          body+=`<td class="${cellCls}"></td>`;
+        } else {
+          body+=`<td class="${cellCls}" onclick="openEP(this,'${p.uid}','${ds}')">`;
+          if(code) body+=cellPill(code,p.uid,ds);
+          body+=`</td>`;
+        }
       });
       body+='</tr>';
     });
