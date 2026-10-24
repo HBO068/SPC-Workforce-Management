@@ -2042,10 +2042,20 @@ function switchUploadTab(which,el){
 // ══════════════════════════════════════
 // TEAMS UPLOAD — SheetJS parser
 // ══════════════════════════════════════
+function _showUploadBusy(id,msg){
+  let el=document.getElementById(id);
+  if(!el){el=document.createElement('div');el.id=id;el.className='upload-progress';document.getElementById('usec-teams').appendChild(el);}
+  el.style.display='block';
+  el.innerHTML=`<span style="animation:spin 1s linear infinite;display:inline-block;margin-right:6px">⏳</span>${msg}`;
+}
+function _hideUploadBusy(id){const el=document.getElementById(id);if(el)el.style.display='none';}
+
 function handleTeamsUpload(e){
   const f=e.target.files[0]; if(!f) return;
+  _showUploadBusy('teams-busy','Parsing '+f.name+' …');
   const reader=new FileReader();
   reader.onload=ev=>{
+    setTimeout(()=>{  // yield to UI
     try{
       const wb=XLSX.read(ev.target.result,{type:'array'});
       // Find Shifts sheet (first sheet that has 'Shifts' or just first)
@@ -2111,9 +2121,12 @@ function handleTeamsUpload(e){
         document.getElementById('teams-conflict-wrap').style.display='none';
         document.getElementById('teams-noconflict-wrap').style.display='block';
       }
+      _hideUploadBusy('teams-busy');
     }catch(err){
+      _hideUploadBusy('teams-busy');
       toast('Error parsing file: '+err.message,'error');
     }
+    },0); // end setTimeout
   };
   reader.readAsArrayBuffer(f);
 }
@@ -2153,6 +2166,7 @@ async function applyTeamsImport(){
   const toWrite=[..._teamsQueue];
   _teamsConflicts.filter(c=>c.choice==='use').forEach(c=>toWrite.push({uid:c.uid,date:c.date,code:c.code}));
   if(!toWrite.length){toast('Nothing to save','warn');return;}
+  _showUploadBusy('teams-busy',`Saving ${toWrite.length} shifts to Firestore …`);
   try{
     const batch=db.batch();
     toWrite.forEach(item=>{
@@ -2165,13 +2179,14 @@ async function applyTeamsImport(){
       if(!SHIFTS[item.uid]) SHIFTS[item.uid]={};
       SHIFTS[item.uid][item.date]=item.code;
     });
+    _hideUploadBusy('teams-busy');
     toast(`✅ Saved ${toWrite.length} shifts`,'ok');
     document.getElementById('teams-conflict-wrap').style.display='none';
     document.getElementById('teams-noconflict-wrap').style.display='none';
     document.getElementById('teams-stats').style.display='none';
     document.getElementById('teamsFile').value='';
     _teamsQueue=[];_teamsConflicts=[];
-  }catch(err){toast('Save failed: '+err.message,'error');}
+  }catch(err){_hideUploadBusy('teams-busy');toast('Save failed: '+err.message,'error');}
 }
 
 // ══════════════════════════════════════
@@ -2179,8 +2194,12 @@ async function applyTeamsImport(){
 // ══════════════════════════════════════
 function handleHistoryUpload(e){
   const f=e.target.files[0]; if(!f) return;
+  const busyEl=document.getElementById('hist-busy')||(()=>{const d=document.createElement('div');d.id='hist-busy';d.className='upload-progress';document.getElementById('usec-history').appendChild(d);return d;})();
+  busyEl.style.display='block';
+  busyEl.innerHTML='<span style="animation:spin 1s linear infinite;display:inline-block;margin-right:6px">⏳</span>Parsing '+f.name+' …';
   const reader=new FileReader();
   reader.onload=ev=>{
+    setTimeout(()=>{
     try{
       const wb=XLSX.read(ev.target.result,{type:'array'});
       // Find roster sheet
@@ -2196,19 +2215,35 @@ function handleHistoryUpload(e){
       const headerRow=rows[3]||[];
       // Dates start at col 18 (index 18)
       const DATE_START=18;
+      // Parse a date header that may be: serial number, 'DD-MM-YYYY', 'D-MMM', JS Date, etc.
+      function _parseHistDate(h){
+        if(!h && h!==0) return '';
+        if(typeof h==='number'){
+          // Excel serial
+          try{
+            const d=XLSX.SSF.parse_date_code(h);
+            return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+          }catch(e){return '';}
+        }
+        const s=h.toString().trim();
+        if(!s) return '';
+        // DD-MM-YYYY or DD/MM/YYYY
+        const dmy=/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/.exec(s);
+        if(dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+        // YYYY-MM-DD already
+        if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        // Try native parse (handles 'Jan 01 2021' etc)
+        const d=new Date(s);
+        if(!isNaN(d)) return d.toISOString().split('T')[0];
+        return '';
+      }
+
       const dateCols=[];
       for(let c=DATE_START;c<headerRow.length;c++){
         const h=headerRow[c];
-        if(!h) continue;
-        let dateStr='';
-        if(typeof h==='number'){
-          const d=XLSX.SSF.parse_date_code(h);
-          dateStr=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
-        } else {
-          const d=new Date(h);
-          if(!isNaN(d)) dateStr=d.toISOString().split('T')[0];
-          else dateStr=h.toString().trim();
-        }
+        if(h===undefined||h===null||h==='') continue;
+        const dateStr=_parseHistDate(h);
+        if(!dateStr) continue;
         dateCols.push({col:c,date:dateStr});
       }
 
@@ -2223,8 +2258,11 @@ function handleHistoryUpload(e){
         if(!planner){skipped++;continue;}
         matched++;
         dateCols.forEach(({col,date})=>{
-          const code=(row[col]||'').toString().trim();
-          if(!code) return;
+          if(!date) return;
+          const raw=row[col];
+          // Only store actual shift codes — skip empty, 0, purely numeric values
+          const code=(raw===undefined||raw===null||raw==='')?'':raw.toString().trim();
+          if(!code||/^\d+(\.\d+)?$/.test(code)) return; // skip numbers (serial dates leaked into data)
           toProcess.push({uid:planner.uid,name:(planner.firstName||'')+' '+(planner.lastName||''),date,code});
         });
       }
@@ -2255,9 +2293,12 @@ function handleHistoryUpload(e){
         document.getElementById('history-conflict-wrap').style.display='none';
         document.getElementById('history-noconflict-wrap').style.display='block';
       }
+      busyEl.style.display='none';
     }catch(err){
+      busyEl.style.display='none';
       toast('Error parsing file: '+err.message,'error');
     }
+    },0);
   };
   reader.readAsArrayBuffer(f);
 }
@@ -2266,6 +2307,8 @@ async function applyHistoryImport(){
   const toWrite=[..._histQueue];
   _histConflicts.filter(c=>c.choice==='use').forEach(c=>toWrite.push({uid:c.uid,date:c.date,code:c.code}));
   if(!toWrite.length){toast('Nothing to save','warn');return;}
+  const busyEl=document.getElementById('hist-busy');
+  if(busyEl){busyEl.style.display='block';busyEl.innerHTML='<span style="animation:spin 1s linear infinite;display:inline-block;margin-right:6px">⏳</span>Saving '+toWrite.length+' shifts …';}
   try{
     // Batch writes — Firestore batch limit 500
     const CHUNK=400;
@@ -2283,13 +2326,14 @@ async function applyHistoryImport(){
       if(!SHIFTS[item.uid]) SHIFTS[item.uid]={};
       SHIFTS[item.uid][item.date]=item.code;
     });
+    if(busyEl) busyEl.style.display='none';
     toast(`✅ Saved ${toWrite.length} historical shifts`,'ok');
     document.getElementById('history-conflict-wrap').style.display='none';
     document.getElementById('history-noconflict-wrap').style.display='none';
     document.getElementById('history-stats').style.display='none';
     document.getElementById('historyFile').value='';
     _histQueue=[];_histConflicts=[];
-  }catch(err){toast('Save failed: '+err.message,'error');}
+  }catch(err){if(busyEl) busyEl.style.display='none';toast('Save failed: '+err.message,'error');}
 }
 
 // ══════════════════════════════════════
