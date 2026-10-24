@@ -283,7 +283,7 @@ tbody tr:hover td{background:var(--bg3)}
         <div class="sb-lbl">Roster</div>
         <div class="sb-item active" id="nav-planners" onclick="showPage('planners')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Planners
+          Employees
         </div>
         <div class="sb-item" id="nav-roster" onclick="showPage('roster')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -330,7 +330,7 @@ tbody tr:hover td{background:var(--bg3)}
       <!-- ══ PLANNERS PAGE ══ -->
       <div class="page active" id="page-planners">
         <div class="page-hdr">
-          <h2>Planners Registry</h2>
+          <h2>Employees Registry</h2>
           <div class="filter-bar">
             <input type="text" id="p-search" placeholder="Search name / UID…" oninput="renderPlanners()" style="width:160px">
             <select id="p-pos-fil" onchange="renderPlanners()">
@@ -384,7 +384,7 @@ tbody tr:hover td{background:var(--bg3)}
             <input type="text" id="r-search" placeholder="Search…" oninput="renderRoster()" style="width:130px">
             <select id="r-status" onchange="renderRoster()">
               <option value="active">Active only</option>
-              <option value="all">All planners</option>
+              <option value="all">All employees</option>
             </select>
           </div>
           <button class="btn primary sm" onclick="exportRosterCSV()">↓ Export CSV</button>
@@ -666,11 +666,13 @@ tbody tr:hover td{background:var(--bg3)}
         <label class="lbl">Job Level</label>
         <select id="f-joblevel">
           <option value="">— Select —</option>
-          <option value="L1">L1 — Planner</option>
-          <option value="L2">L2 — Senior Planner</option>
-          <option value="L3">L3 — Supervisor</option>
-          <option value="L4">L4 — Manager</option>
-          <option value="L5">L5 — Head / Lead</option>
+          <option value="L1">L1</option>
+          <option value="L2">L2</option>
+          <option value="L3">L3</option>
+          <option value="L4">L4</option>
+          <option value="L5">L5</option>
+          <option value="L6">L6</option>
+          <option value="L7">L7</option>
         </select>
       </div>
       <div class="fl">
@@ -687,8 +689,12 @@ tbody tr:hover td{background:var(--bg3)}
         </select>
       </div>
       <div class="fl">
-        <label class="lbl">Opening Leave Balance <span style="color:var(--text3);font-size:9px">(carry-over days)</span></label>
-        <input type="number" id="f-openbal" placeholder="0" step="0.5" min="0">
+        <label class="lbl">2019 Carry-over Balance <span style="color:var(--text3);font-size:9px">(days — disabled if hire date ≥ 2021)</span></label>
+        <input type="number" id="f-bal2019" placeholder="0" step="0.5" min="0">
+      </div>
+      <div class="fl">
+        <label class="lbl">2020 Carry-over Balance <span style="color:var(--text3);font-size:9px">(days — disabled if hire date ≥ 2021)</span></label>
+        <input type="number" id="f-bal2020" placeholder="0" step="0.5" min="0">
       </div>
     </div>
     <!-- Optional fields -->
@@ -970,7 +976,7 @@ function renderPlanners(){
     return matchQ && matchPos && matchSt;
   });
   if(!list.length){
-    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No planners found</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No employees found</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(p=>{
@@ -1005,7 +1011,9 @@ function openAddPlanner(){
   document.getElementById('f-contract').value='CDI';
   document.getElementById('f-joblevel').value='';
   document.getElementById('f-schedtype').value='shift';
-  document.getElementById('f-openbal').value='';
+  document.getElementById('f-bal2019').value='';
+  document.getElementById('f-bal2020').value='';
+  _updateBalanceFields('');
   // populate reports-to
   const rs=document.getElementById('f-reportsto');
   rs.innerHTML='<option value="">— None —</option>';
@@ -1040,7 +1048,9 @@ function editPlanner(uid){
   document.getElementById('f-contract').value = p.contractType||'CDI';
   document.getElementById('f-joblevel').value = p.jobLevel||'';
   document.getElementById('f-schedtype').value= p.schedType||'shift';
-  document.getElementById('f-openbal').value  = p.openingBalance!=null ? p.openingBalance : '';
+  document.getElementById('f-bal2019').value  = p.bal2019!=null ? p.bal2019 : '';
+  document.getElementById('f-bal2020').value  = p.bal2020!=null ? p.bal2020 : '';
+  _updateBalanceFields(p.hireDate);
   // populate reports-to
   const rs=document.getElementById('f-reportsto');
   rs.innerHTML='<option value="">— None —</option>';
@@ -1060,7 +1070,8 @@ async function savePlanner(){
   const firstName = document.getElementById('f-first').value.trim();
   const lastName  = document.getElementById('f-last').value.trim();
   if(!firstName){ toast('First name is required','err'); return; }
-  const obVal = document.getElementById('f-openbal').value.trim();
+  const obVal2019 = document.getElementById('f-bal2019').value.trim();
+  const obVal2020 = document.getElementById('f-bal2020').value.trim();
   const data = {
     payrollId,
     uid,
@@ -1076,7 +1087,8 @@ async function savePlanner(){
     jobLevel:       document.getElementById('f-joblevel').value,
     reportsTo:      document.getElementById('f-reportsto').value,
     schedType:      document.getElementById('f-schedtype').value,
-    openingBalance: obVal!=='' ? parseFloat(obVal) : 0,
+    bal2019:        obVal2019!=='' ? parseFloat(obVal2019) : 0,
+    bal2020:        obVal2020!=='' ? parseFloat(obVal2020) : 0,
     status:         'active',
     updatedAt:      new Date().toISOString(),
   };
@@ -1118,6 +1130,25 @@ async function savePlanner(){
     renderPlanners();
   } catch(e){ console.error(e); toast('Save failed: '+e.message,'err'); }
 }
+
+// Balance field enable/disable based on hire date
+function _updateBalanceFields(hireDate){
+  let disabled = false;
+  if(hireDate){
+    let d = hireDate.toDate ? hireDate.toDate() : new Date(hireDate+(typeof hireDate==='string'?'T00:00:00':''));
+    disabled = d.getFullYear() >= 2021;
+  }
+  ['f-bal2019','f-bal2020'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.disabled=disabled;
+    el.style.background=disabled?'var(--bg3)':'';
+    el.style.color=disabled?'var(--text3)':'';
+    if(disabled){ el.value='0'; el.title='Not applicable — system tracks from 2021 onward'; }
+    else { el.removeAttribute('title'); }
+  });
+}
+document.getElementById('f-hire')?.addEventListener('change',function(){ _updateBalanceFields(this.value); });
 
 // EXIT (resign / terminate)
 function openExit(uid){
@@ -1258,7 +1289,7 @@ function renderRoster(){
     const pst=p.status||'active';
     const matchSt = stFil==='all' ? true : pst==='active';
     const matchQ  = !q || ((p.firstName||'')+(p.lastName||'')+(p.uid||'')).toLowerCase().includes(q);
-    return matchSt && matchQ;
+    return matchSt && matchQ && p.position!=='Head of COE';
   });
 
   // PH bar
@@ -1567,7 +1598,7 @@ function renderLeaves(){
   const y=document.getElementById('lv-year').value||'2026';
   const q=(document.getElementById('lv-search').value||'').toLowerCase();
   const tbody=document.getElementById('lv-tbody');
-  const list=PLANNERS.filter(p=>(p.status||'active')==='active')
+  const list=PLANNERS.filter(p=>(p.status||'active')==='active' && p.position!=='Head of COE')
     .filter(p=>!q||((p.firstName||'')+(p.lastName||'')).toLowerCase().includes(q));
   tbody.innerHTML=list.map(p=>{
     const ytd=calcYTDGiven(p,y);
@@ -1684,7 +1715,7 @@ function renderPayroll(){
   const tbody=document.getElementById('payroll-tbody');
   if(!tbody) return;
 
-  const rows=PLANNERS.filter(p=>(p.status||'active')!=='').map(p=>{
+  const rows=PLANNERS.filter(p=>(p.status||'active')!=='' && p.position!=='Head of COE').map(p=>{
     const sh=SHIFTS[p.uid]||{};
     let workDays=0,cal=0,el=0,sl=0,otherLeave=0,lateHrs=0,cCount=0,cpTaken=0;
     const slDates=[];
@@ -1740,11 +1771,11 @@ function renderOrganigram(){
   if(!active.length){el.innerHTML='<p style="color:var(--text3);padding:20px">No employees to display.</p>';return;}
 
   // Group by job level
-  const levels={'L5':[],'L4':[],'L3':[],'L2':[],'L1':[],'':[]};
+  const levels={'L7':[],'L6':[],'L5':[],'L4':[],'L3':[],'L2':[],'L1':[],'':[]};
   active.forEach(p=>{ const l=p.jobLevel||''; (levels[l]||(levels[l]=[])).push(p); });
 
-  const levelLabels={'L5':'L5 — Head / Lead','L4':'L4 — Manager','L3':'L3 — Supervisor','L2':'L2 — Senior Planner','L1':'L1 — Planner','':'No Level'};
-  const orderedLevels=['L5','L4','L3','L2','L1',''];
+  const levelLabels={'L7':'L7','L6':'L6','L5':'L5','L4':'L4','L3':'L3','L2':'L2','L1':'L1','':'No Level Assigned'};
+  const orderedLevels=['L7','L6','L5','L4','L3','L2','L1',''];
 
   let html='<div style="font-family:inherit">';
   orderedLevels.forEach(lv=>{
