@@ -237,6 +237,34 @@ tbody tr:hover td{background:var(--bg3)}
 
 /* ── FTE TURNAROUND page ── */
 .turnaround-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:20px;overflow-y:auto;flex:1}
+/* FTE table */
+.fte-section{margin-bottom:32px}
+.fte-section-title{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.07em;padding:10px 16px;background:var(--navy);color:#fff;border-radius:var(--r) var(--r) 0 0;display:flex;align-items:center;gap:10px}
+.fte-tbl-wrap{overflow-x:auto}
+.fte-tbl{border-collapse:collapse;font-size:11px;width:100%}
+.fte-tbl th{background:var(--bg3);color:var(--text2);font-weight:700;padding:6px 10px;border:1px solid var(--border);text-align:center;white-space:nowrap;position:sticky;top:0;z-index:2}
+.fte-tbl th.row-hdr{text-align:left;min-width:100px;position:sticky;left:0;z-index:3;background:var(--bg3)}
+.fte-tbl td{padding:5px 8px;border:1px solid var(--border);text-align:center;vertical-align:middle}
+.fte-tbl td.row-hdr{font-weight:700;font-size:11px;background:var(--bg2);text-align:left;position:sticky;left:0;z-index:1;white-space:nowrap}
+.fte-tbl td.need-cell input{width:36px;text-align:center;border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text);font-family:inherit}
+.fte-tbl td.need-cell input:focus{outline:1px solid var(--accent);border-radius:3px}
+.fte-actual{font-weight:700;color:var(--accent)}
+.fte-gap-pos{color:#16A34A;font-weight:700}
+.fte-gap-neg{color:#DC2626;font-weight:700}
+.fte-gap-zero{color:var(--text3)}
+.fte-row-need{background:var(--bg2)}
+.fte-row-actual{background:#F0FDF4}
+.fte-row-gap{background:#FFF8F8}
+.fte-event-row td{padding:3px 6px;font-size:10px;font-weight:700}
+.fte-ev-hired{background:#D1FAE5;color:#065F46}
+.fte-ev-resigned{background:#FEF9C3;color:#713F12}
+.fte-ev-terminated{background:#FEE2E2;color:#991B1B}
+.fte-ev-promoted{background:#DBEAFE;color:#1E40AF}
+.fte-ev-empty{background:transparent;color:var(--text3)}
+.fte-add-terminal{display:flex;gap:8px;align-items:center;padding:10px 16px;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)}
+.fte-terminal-tag{display:inline-flex;align-items:center;gap:4px;background:var(--navy);color:#fff;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700}
+.fte-terminal-tag button{background:none;border:none;color:#fff;cursor:pointer;padding:0;font-size:12px;line-height:1;opacity:.7}
+.fte-terminal-tag button:hover{opacity:1}
 .tta-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px}
 .tta-name{font-weight:700;font-size:13px;margin-bottom:2px}
 .tta-uid{font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:10px}
@@ -416,6 +444,7 @@ tbody tr:hover td{background:var(--bg3)}
               <option>Planning Capabilities Lead</option>
               <option>Planning Manager</option>
               <option>Head of COE</option>
+              <option>Head of SPC</option>
               <option>Data Analyst</option>
             </select>
             <select id="p-status-fil" onchange="renderPlanners()">
@@ -612,17 +641,13 @@ tbody tr:hover td{background:var(--bg3)}
       <div class="page" id="page-turnaround">
         <div class="page-hdr">
           <h2>FTE Turnaround</h2>
-          <select id="tt-year" onchange="renderTurnaround()" style="width:80px">
-            <option>2021</option><option>2022</option><option>2023</option><option>2024</option><option>2025</option><option selected>2026</option>
-          </select>
-          <select id="tt-type" onchange="renderTurnaround()">
-            <option value="">All types</option>
-            <option value="resigned">Resigned</option>
-            <option value="terminated">Terminated</option>
-          </select>
+          <div class="filter-bar">
+            <select id="tt-year" onchange="renderTurnaround()" style="width:80px"></select>
+            <button class="btn sm" onclick="openAddTerminal()">+ Terminal</button>
+          </div>
         </div>
-        <div class="turnaround-grid" id="tt-grid">
-          <div style="text-align:center;padding:60px;color:var(--text3);grid-column:1/-1">No turnaround data yet. Mark planners as Resigned or Terminated to track reasons.</div>
+        <div style="padding:16px 20px;flex:1;overflow-y:auto" id="tt-body">
+          <div style="text-align:center;padding:60px;color:var(--text3)">Loading…</div>
         </div>
       </div>
 
@@ -806,6 +831,7 @@ tbody tr:hover td{background:var(--bg3)}
           <option>Planning Capabilities Lead</option>
           <option>Planning Manager</option>
           <option>Head of COE</option>
+          <option>Head of SPC</option>
           <option>Data Analyst</option>
         </select>
       </div>
@@ -944,6 +970,7 @@ tbody tr:hover td{background:var(--bg3)}
         <option>Planning Capabilities Lead</option>
         <option>Planning Manager</option>
         <option>Head of COE</option>
+        <option>Head of SPC</option>
         <option>Data Analyst</option>
       </select>
     </div>
@@ -1087,7 +1114,7 @@ function showPage(id){
   document.getElementById('nav-'+id)?.classList.add('active');
   if(id==='roster') renderRoster();
   if(id==='settings') renderSettingsHolidays();
-  if(id==='turnaround') renderTurnaround();
+  if(id==='turnaround'){ _initTTYear(); loadFTEData().then(()=>renderTurnaround()); }
   if(id==='leaves') renderLeaves();
 }
 
@@ -1167,9 +1194,9 @@ function calcTaken(uid, year){
   return n;
 }
 function posBadge(pos){
-  const m={'Planning Manager':'pos-pm','Planning Supervisor':'pos-sup','Planning Capabilities Lead':'pos-pcl','Operations Planner':'pos-pln','Head of COE':'pos-hcoe','Data Analyst':'pos-da'};
+  const m={'Planning Manager':'pos-pm','Planning Supervisor':'pos-sup','Planning Capabilities Lead':'pos-pcl','Operations Planner':'pos-pln','Head of COE':'pos-hcoe','Head of SPC':'pos-hcoe','Data Analyst':'pos-da'};
   const cls=m[pos]||'pos-pln';
-  const short={'Planning Capabilities Lead':'PCT Lead','Operations Planner':'OPS Planner','Planning Supervisor':'Supervisor','Planning Manager':'Manager','Head of COE':'Head of COE','Data Analyst':'Data Analyst'};
+  const short={'Planning Capabilities Lead':'PCT Lead','Operations Planner':'OPS Planner','Planning Supervisor':'Supervisor','Planning Manager':'Manager','Head of COE':'Head of COE','Head of SPC':'Head of SPC','Data Analyst':'Data Analyst'};
   return `<span class="pos-badge ${cls}">${short[pos]||pos}</span>`;
 }
 function statusPill(status){
@@ -1636,7 +1663,7 @@ function renderRoster(){
   // If viewing full year, show exited employees but lock cells after exit date.
   const planners = PLANNERS.filter(p=>{
     const pst=p.status||'active';
-    if(p.position==='Head of COE') return false;
+    if(p.position==='Head of COE'||p.position==='Head of SPC') return false;
     const matchQ  = !q || ((p.firstName||'')+(p.lastName||'')+(p.uid||'')).toLowerCase().includes(q);
     if(!matchQ) return false;
     if(stFil==='active' && pst!=='active'){
@@ -1968,7 +1995,7 @@ function renderLeaves(){
   const y=document.getElementById('lv-year').value||'2026';
   const q=(document.getElementById('lv-search').value||'').toLowerCase();
   const tbody=document.getElementById('lv-tbody');
-  const list=PLANNERS.filter(p=>(p.status||'active')==='active' && p.position!=='Head of COE')
+  const list=PLANNERS.filter(p=>(p.status||'active')==='active' && p.position!=='Head of COE' && p.position!=='Head of SPC')
     .filter(p=>!q||((p.firstName||'')+(p.lastName||'')).toLowerCase().includes(q));
   tbody.innerHTML=list.map(p=>{
     const ytd=calcYTDGiven(p,y);
@@ -1989,38 +2016,218 @@ function renderLeaves(){
 }
 
 // ══════════════════════════════════════
+// ══════════════════════════════════════
 // FTE TURNAROUND
 // ══════════════════════════════════════
+// FTE_DATA structure stored in Firestore 'settings/fte_data':
+// { terminals: ['TC1','TC4',...], needs: { '2026': { 'TC1': {0:5,1:5,...11:5}, 'TC4': {...} } } }
+let FTE_DATA={terminals:[], needs:{}};
+
+async function loadFTEData(){
+  try{
+    const doc=await db.collection('settings').doc('fte_data').get();
+    if(doc.exists) FTE_DATA=doc.data();
+    if(!FTE_DATA.terminals) FTE_DATA.terminals=[];
+    if(!FTE_DATA.needs) FTE_DATA.needs={};
+  }catch(e){}
+}
+
+async function saveFTEData(){
+  await db.collection('settings').doc('fte_data').set(FTE_DATA);
+}
+
+function _initTTYear(){
+  const sel=document.getElementById('tt-year');
+  if(!sel) return;
+  const curY=new Date().getFullYear();
+  const years=[];
+  for(let y=2021;y<=curY+1;y++) years.push(y);
+  sel.innerHTML=years.map(y=>`<option value="${y}"${y===curY?'selected':''}>${y}</option>`).join('');
+}
+
 function renderTurnaround(){
-  const y=parseInt(document.getElementById('tt-year').value)||2026;
-  const typeF=document.getElementById('tt-type').value;
-  const list=PLANNERS.filter(p=>{
-    const pst=p.status||'active';
-    if(pst==='active') return false;
-    if(typeF && pst!==typeF) return false;
-    if(p.exitYear && p.exitYear!==y) return false;
-    if(!p.exitYear && p.exitDate){
-      const ey=parseInt((p.exitDate||'').split('-')[0]);
-      if(ey!==y) return false;
+  const y=parseInt(document.getElementById('tt-year').value)||new Date().getFullYear();
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const body=document.getElementById('tt-body');
+
+  // ── Compute actuals per month for OPS Planners and Supervisors ──
+  // A planner is active in month M of year Y if:
+  //   hireDate <= last day of M/Y  AND  (no exitDate OR exitDate >= first day of M/Y but exit month still counts)
+  function isActiveInMonth(p, y, m){
+    const firstDay=new Date(y,m,1);
+    const lastDay=new Date(y,m+1,0);
+    // Hire check
+    if(p.hireDate){
+      const hd=new Date(p.hireDate+'T00:00:00');
+      if(hd>lastDay) return false;
+    }
+    // Exit check — exit month still counts, gap shows next month
+    if(p.exitDate){
+      const ed=new Date(p.exitDate+'T00:00:00');
+      // If exit is before the first day of this month → not active
+      if(ed<firstDay) return false;
+    }
+    // Must not be exited before this year entirely
+    const st=p.status||'active';
+    if((st==='resigned'||st==='terminated')&&p.exitDate){
+      const ed=new Date(p.exitDate+'T00:00:00');
+      if(ed<firstDay) return false;
     }
     return true;
-  });
-  const grid=document.getElementById('tt-grid');
-  if(!list.length){
-    grid.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text3);grid-column:1/-1">No exits recorded for ${y}${typeF?' ('+typeF+')':''}.</div>`;
-    return;
   }
-  grid.innerHTML=list.map(p=>`
-    <div class="tta-card">
-      <div class="tta-name">${p.firstName||''} ${p.lastName||''}</div>
-      <div class="tta-uid">${p.uid} · ${p.payrollId||''}</div>
-      <div class="tta-row"><span class="tta-lbl">Position</span><span class="tta-val">${(p.position||'').replace('Operations Planner','OPS Planner')}</span></div>
-      <div class="tta-row"><span class="tta-lbl">Hire Date</span><span class="tta-val">${fmtDate(p.hireDate)}</span></div>
-      <div class="tta-row"><span class="tta-lbl">Exit Date</span><span class="tta-val">${fmtDate(p.exitDate)}</span></div>
-      <div class="tta-row"><span class="tta-lbl">Type</span><span class="tta-val ${p.status==='resigned'?'s-resigned':'s-terminated'}" style="padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">${p.status==='resigned'?'Resignation':'Termination'}</span></div>
-      <div class="tta-row"><span class="tta-lbl">Reason</span><span class="reason-pill">${p.exitReason||'—'}</span></div>
-      ${p.exitNotes?`<div style="margin-top:8px;font-size:10px;color:var(--text3);background:var(--bg);padding:6px 8px;border-radius:var(--r)">${p.exitNotes}</div>`:''}
-    </div>`).join('');
+
+  // Events per month: hired/resigned/terminated/promoted — based on history array
+  function eventsInMonth(y,m){
+    const ev={hired:0,resigned:0,terminated:0,promoted:0};
+    const yStr=String(y);
+    const mStr=String(m+1).padStart(2,'0');
+    const prefix=`${yStr}-${mStr}`;
+    PLANNERS.forEach(p=>{
+      (p.history||[]).forEach(h=>{
+        if((h.date||'').startsWith(prefix)){
+          if(h.type==='hired') ev.hired++;
+          else if(h.type==='resigned') ev.resigned++;
+          else if(h.type==='terminated') ev.terminated++;
+          else if(h.type==='promoted') ev.promoted++;
+        }
+      });
+    });
+    return ev;
+  }
+
+  // Compute actuals
+  const opsActual=[], supActual=[];
+  for(let m=0;m<12;m++){
+    opsActual.push(PLANNERS.filter(p=>{
+      const pos=(p.position||'').toLowerCase();
+      return pos.includes('operations planner')||pos.includes('ops planner')||pos==='ops pln';
+    }).filter(p=>isActiveInMonth(p,y,m)).length);
+    supActual.push(PLANNERS.filter(p=>{
+      const pos=(p.position||'').toLowerCase();
+      return pos.includes('supervisor')||pos==='sup';
+    }).filter(p=>isActiveInMonth(p,y,m)).length);
+  }
+
+  const terminals=FTE_DATA.terminals||[];
+  const yearNeeds=(FTE_DATA.needs||{})[y]||{};
+
+  function gapClass(g){ return g>0?'fte-gap-pos':g<0?'fte-gap-neg':'fte-gap-zero'; }
+  function gapSign(g){ return g>0?'+'+g:g; }
+
+  function buildTable(label, actualArr, roleKey){
+    const months=MONTHS;
+    // Header
+    let h=`<div class="fte-section">
+      <div class="fte-section-title">
+        ${label}
+        <span style="font-weight:400;font-size:10px;opacity:.8;margin-left:auto">Need = enter per terminal · Actual = live headcount · Gap = Need − Actual</span>
+      </div>
+      <div class="fte-tbl-wrap"><table class="fte-tbl">
+        <thead><tr>
+          <th class="row-hdr">Terminal</th>
+          ${months.map(m=>`<th>${m}</th>`).join('')}
+        </tr></thead><tbody>`;
+
+    // Need rows per terminal
+    terminals.forEach(term=>{
+      const termNeeds=(yearNeeds[term]||{});
+      h+=`<tr class="fte-row-need">
+        <td class="row-hdr">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span>${term}</span>
+            <button onclick="removeTerminal('${term}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 2px" title="Remove">×</button>
+          </div>
+          <div style="font-size:9px;color:var(--text3);font-weight:400">Need</div>
+        </td>`;
+      for(let m=0;m<12;m++){
+        const val=termNeeds[m]!==undefined?termNeeds[m]:'';
+        h+=`<td class="need-cell"><input type="number" min="0" value="${val}" onchange="saveNeed('${term}',${m},${y},this.value,'${roleKey}')" placeholder="—"></td>`;
+      }
+      h+=`</tr>`;
+
+      // Actual row
+      h+=`<tr class="fte-row-actual"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600;padding-left:20px">Actual</td>`;
+      for(let m=0;m<12;m++){
+        h+=`<td class="fte-actual">${actualArr[m]}</td>`;
+      }
+      h+=`</tr>`;
+
+      // Gap row
+      h+=`<tr class="fte-row-gap"><td class="row-hdr" style="font-size:9px;color:var(--text3);padding-left:20px">Gap</td>`;
+      for(let m=0;m<12;m++){
+        const need=termNeeds[m]!==undefined?parseInt(termNeeds[m])||0:null;
+        if(need===null){ h+=`<td class="fte-gap-zero">—</td>`; }
+        else{
+          const gap=need-actualArr[m];
+          h+=`<td class="${gapClass(gap)}">${gapSign(gap)}</td>`;
+        }
+      }
+      h+=`</tr>`;
+    });
+
+    if(!terminals.length){
+      h+=`<tr><td class="row-hdr" style="color:var(--text3);font-style:italic">No terminals yet</td>${months.map(()=>'<td>—</td>').join('')}</tr>`;
+    }
+
+    // Separator
+    h+=`<tr style="height:6px"><td colspan="13" style="border:none;background:var(--bg)"></td></tr>`;
+
+    // Events rows
+    const evColors={hired:'fte-ev-hired',resigned:'fte-ev-resigned',terminated:'fte-ev-terminated',promoted:'fte-ev-promoted'};
+    const evLabels={hired:'🟢 Hired',resigned:'🟡 Resigned',terminated:'🔴 Terminated',promoted:'🔵 Promoted'};
+    ['hired','resigned','terminated','promoted'].forEach(type=>{
+      h+=`<tr class="fte-event-row"><td class="row-hdr ${evColors[type]}" style="font-size:10px">${evLabels[type]}</td>`;
+      for(let m=0;m<12;m++){
+        const ev=eventsInMonth(y,m);
+        const count=ev[type];
+        h+=`<td class="${count?evColors[type]:'fte-ev-empty'}">${count||'—'}</td>`;
+      }
+      h+=`</tr>`;
+    });
+
+    h+=`</tbody></table></div>
+      <div class="fte-add-terminal">
+        <span style="font-size:11px;color:var(--text3)">Terminals: </span>
+        ${terminals.map(t=>`<span class="fte-terminal-tag">${t} <button onclick="removeTerminal('${t}')">×</button></span>`).join('')}
+        ${!terminals.length?'<span style="font-size:11px;color:var(--text3);font-style:italic">None added yet — click + Terminal above</span>':''}
+      </div>
+    </div>`;
+    return h;
+  }
+
+  body.innerHTML=
+    buildTable('OPS Planners', opsActual, 'ops') +
+    buildTable('Supervisors', supActual, 'sup');
+}
+
+async function saveNeed(terminal, month, year, value){
+  if(!FTE_DATA.needs) FTE_DATA.needs={};
+  if(!FTE_DATA.needs[year]) FTE_DATA.needs[year]={};
+  if(!FTE_DATA.needs[year][terminal]) FTE_DATA.needs[year][terminal]={};
+  const v=parseInt(value);
+  if(isNaN(v)||value===''){ delete FTE_DATA.needs[year][terminal][month]; }
+  else{ FTE_DATA.needs[year][terminal][month]=v; }
+  try{ await saveFTEData(); }catch(e){ toast('Could not save need: '+e.message,'error'); }
+}
+
+function openAddTerminal(){
+  const name=prompt('Terminal name (e.g. TC1, TC4, BM):','');
+  if(!name||!name.trim()) return;
+  const t=name.trim().toUpperCase();
+  if(FTE_DATA.terminals.includes(t)){ toast('Terminal already exists','warn'); return; }
+  FTE_DATA.terminals.push(t);
+  saveFTEData().then(()=>renderTurnaround()).catch(e=>toast('Save error: '+e.message,'error'));
+}
+
+async function removeTerminal(t){
+  if(!confirm(`Remove terminal "${t}"? This will delete all saved needs for it.`)) return;
+  FTE_DATA.terminals=FTE_DATA.terminals.filter(x=>x!==t);
+  // Remove needs for this terminal across all years
+  Object.keys(FTE_DATA.needs||{}).forEach(y=>{
+    if(FTE_DATA.needs[y]) delete FTE_DATA.needs[y][t];
+  });
+  await saveFTEData();
+  renderTurnaround();
 }
 
 // ══════════════════════════════════════
@@ -2442,7 +2649,7 @@ function renderPayroll(){
   const tbody=document.getElementById('payroll-tbody');
   if(!tbody) return;
 
-  const rows=PLANNERS.filter(p=>(p.status||'active')!=='' && p.position!=='Head of COE').map(p=>{
+  const rows=PLANNERS.filter(p=>(p.status||'active')!=='' && p.position!=='Head of COE' && p.position!=='Head of SPC').map(p=>{
     const sh=SHIFTS[p.uid]||{};
     let workDays=0,cal=0,el=0,sl=0,otherLeave=0,lateHrs=0,cCount=0,cpTaken=0;
     const slDates=[];
