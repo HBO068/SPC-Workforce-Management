@@ -2210,7 +2210,7 @@ function renderTurnaround(){
           </td>`;
         for(let m=0;m<12;m++){
           const val=termNeeds[m]!==undefined?termNeeds[m]:'';
-          h+=`<td class="need-cell"><input type="number" min="0" value="${val}" oninput="saveNeed('${term}',${m},${y},this.value)" placeholder="—"></td>`;
+          h+=`<td class="need-cell"><input type="number" min="0" step="0.5" value="${val}" oninput="saveNeed('${term}',${m},${y},this.value)" placeholder="—"></td>`;
         }
         h+=`</tr>`;
       });
@@ -2225,7 +2225,7 @@ function renderTurnaround(){
       let sum=0; let hasAny=false;
       terminals.forEach(term=>{
         const v=(yearNeeds[term]||{})[m];
-        if(v!==undefined){sum+=parseInt(v)||0;hasAny=true;}
+        if(v!==undefined){sum+=parseFloat(v)||0;hasAny=true;}
       });
       totalNeeds.push(hasAny?sum:null);
       h+=`<td style="font-weight:700;text-align:center;background:var(--bg2)">${hasAny?sum:'—'}</td>`;
@@ -2245,7 +2245,7 @@ function renderTurnaround(){
       const need=totalNeeds[m];
       if(need===null){ h+=`<td style="text-align:center;color:var(--text3)">—</td>`; }
       else{
-        const gap=need-opsActual[m];
+        const gap=opsActual[m]-need;
         h+=`<td class="${gapClass(gap)}">${gapSign(gap)}</td>`;
       }
     }
@@ -2293,7 +2293,7 @@ function renderTurnaround(){
     h+=`<tr class="fte-row-need"><td class="row-hdr" style="font-size:9px;color:var(--text3);font-weight:600">Need</td>`;
     for(let m=0;m<12;m++){
       const val=supNeeds[m]!==undefined?supNeeds[m]:'';
-      h+=`<td class="need-cell"><input type="number" min="0" value="${val}" oninput="saveNeed('__sup__',${m},${y},this.value)" placeholder="—"></td>`;
+      h+=`<td class="need-cell"><input type="number" min="0" step="0.5" value="${val}" oninput="saveNeed('__sup__',${m},${y},this.value)" placeholder="—"></td>`;
     }
     h+=`</tr>`;
 
@@ -2307,10 +2307,10 @@ function renderTurnaround(){
     // Gap
     h+=`<tr class="fte-row-gap" id="fte-sup-gap-row"><td class="row-hdr" style="font-size:9px;color:var(--text3)">Gap</td>`;
     for(let m=0;m<12;m++){
-      const need=supNeeds[m]!==undefined?parseInt(supNeeds[m])||0:null;
+      const need=supNeeds[m]!==undefined?parseFloat(supNeeds[m])||0:null;
       if(need===null){ h+=`<td style="text-align:center;color:var(--text3)">—</td>`; }
       else{
-        const gap=need-supActual[m];
+        const gap=supActual[m]-need;
         h+=`<td class="${gapClass(gap)}">${gapSign(gap)}</td>`;
       }
     }
@@ -2345,7 +2345,7 @@ function saveNeed(terminal, month, year, value){
   if(!FTE_DATA.needs) FTE_DATA.needs={};
   if(!FTE_DATA.needs[yStr]) FTE_DATA.needs[yStr]={};
   if(!FTE_DATA.needs[yStr][terminal]) FTE_DATA.needs[yStr][terminal]={};
-  const v=parseInt(value);
+  const v=parseFloat(value);
   if(isNaN(v)||value===''){ delete FTE_DATA.needs[yStr][terminal][month]; }
   else{ FTE_DATA.needs[yStr][terminal][month]=v; }
   // Refresh only the summary rows (Total/Actual/Gap) without destroying inputs
@@ -2387,12 +2387,12 @@ function _refreshTotalsOnly(y){
   if(totalRow&&actualRow&&gapRow){
     for(let m=0;m<12;m++){
       let sum=0;let hasAny=false;
-      terminals.forEach(term=>{const v=(yearNeeds[term]||{})[m];if(v!==undefined){sum+=parseInt(v)||0;hasAny=true;}});
+      terminals.forEach(term=>{const v=(yearNeeds[term]||{})[m];if(v!==undefined){sum+=parseFloat(v)||0;hasAny=true;}});
       totalRow.cells[m+1].textContent=hasAny?sum:'—';
       actualRow.cells[m+1].textContent=opsActual[m];
       const need=hasAny?sum:null;
       if(need===null){gapRow.cells[m+1].className='';gapRow.cells[m+1].textContent='—';}
-      else{const gap=need-opsActual[m];gapRow.cells[m+1].className=gapClass(gap);gapRow.cells[m+1].textContent=gapSign(gap);}
+      else{const gap=opsActual[m]-need;gapRow.cells[m+1].className=gapClass(gap);gapRow.cells[m+1].textContent=gapSign(gap);}
     }
   }
   // Update Supervisor actual/gap cells
@@ -2402,9 +2402,9 @@ function _refreshTotalsOnly(y){
   if(supActualRow&&supGapRow){
     for(let m=0;m<12;m++){
       supActualRow.cells[m+1].textContent=supActual[m];
-      const need=supNeeds[m]!==undefined?parseInt(supNeeds[m])||0:null;
-      if(need===null){supGapRow.cells[m+1].className='';supGapRow.cells[m+1].textContent='—';}
-      else{const gap=need-supActual[m];supGapRow.cells[m+1].className=gapClass(gap);supGapRow.cells[m+1].textContent=gapSign(gap);}
+      const need=supNeeds[m]!==undefined?parseFloat(supNeeds[m])||0:null;
+      if(need===null){supGapRow.cells[m+1].className='';supGapRow.cells[m+1].textContent='—';
+      else{const gap=supActual[m]-need;supGapRow.cells[m+1].className=gapClass(gap);supGapRow.cells[m+1].textContent=gapSign(gap);}
     }
   }
 }
