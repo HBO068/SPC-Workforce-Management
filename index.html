@@ -2403,7 +2403,7 @@ function _refreshTotalsOnly(y){
     for(let m=0;m<12;m++){
       supActualRow.cells[m+1].textContent=supActual[m];
       const need=supNeeds[m]!==undefined?parseFloat(supNeeds[m])||0:null;
-      if(need===null){supGapRow.cells[m+1].className='';supGapRow.cells[m+1].textContent='—';
+      if(need===null){supGapRow.cells[m+1].className='';supGapRow.cells[m+1].textContent='—';}
       else{const gap=supActual[m]-need;supGapRow.cells[m+1].className=gapClass(gap);supGapRow.cells[m+1].textContent=gapSign(gap);}
     }
   }
