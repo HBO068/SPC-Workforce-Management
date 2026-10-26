@@ -3104,17 +3104,13 @@ function renderHiringTable(){
     return;
   }
 
-  // Legend strip
-  let legend = `<div style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 4px 12px;font-size:11px;color:var(--text2)">`;
-  criteria.forEach((c,i)=>{ legend+=`<span><b style="color:var(--accent)">${codes[i]}</b> — ${c}</span>`; });
-  legend+=`</div>`;
-
-  // Summary table — codes as column headers, always visible
+  // Summary table — codes as column headers with tooltips, no separate legend
   let html = `<div style="overflow-x:auto"><table class="h-table"><thead><tr>
     <th class="th-name" style="min-width:150px">Candidate</th>
     <th style="min-width:90px">Date</th>`;
   codes.forEach((cd,i)=>{html+=`<th style="min-width:36px"><span class="h-code-tip" data-tip="${criteria[i]}">${cd}</span></th>`;});
   html+=`<th style="min-width:54px">Score</th><th style="min-width:90px">Decision</th><th style="min-width:160px">Comments</th><th style="min-width:80px"></th></tr></thead><tbody>`;
+  legend = '';
 
   records.forEach(r=>{
     const scores = criteria.map(c=>{
@@ -3142,7 +3138,7 @@ function renderHiringTable(){
       </td></tr>`;
   });
   html+=`</tbody></table></div>`;
-  wrap.innerHTML = legend + html;
+  wrap.innerHTML = html;
 }
 
 function openHiringModal(type){
