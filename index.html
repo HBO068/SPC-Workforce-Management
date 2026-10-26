@@ -103,6 +103,7 @@ tbody tr:hover td{background:var(--bg3)}
 .s-active{background:#D1FAE5;color:#065F46}
 .s-resigned{background:#FEE2E2;color:#991B1B}
 .s-terminated{background:#FEF3C7;color:#92400E}
+.s-other{background:#E0E7FF;color:#3730A3}
 
 /* ── ROSTER ── */
 .roster-wrap{flex:1;overflow:auto}
@@ -482,6 +483,7 @@ tbody tr:hover td{background:var(--bg3)}
               <option value="all">All</option>
               <option value="resigned">Resigned</option>
               <option value="terminated">Terminated</option>
+              <option value="other">Transferred Out</option>
             </select>
           </div>
           <div class="filter-bar" id="reg-filters" style="display:none">
@@ -1033,7 +1035,12 @@ tbody tr:hover td{background:var(--bg3)}
         <option>Head of COE</option>
         <option>Head of SPC</option>
         <option>Data Analyst</option>
+        <option value="__other__">Other (Outside SPC)</option>
       </select>
+    </div>
+    <div class="fl" id="promote-other-wrap" style="display:none">
+      <label class="lbl">New Role / Department <span style="font-size:9px;color:var(--text3)">(optional description)</span></label>
+      <input type="text" id="promote-other-desc" placeholder="e.g. HR Manager, Finance Dept…" style="width:100%">
     </div>
     <div class="fl">
       <label class="lbl">New Job Level</label>
@@ -1262,8 +1269,8 @@ function posBadge(pos){
   return `<span class="pos-badge ${cls}">${short[pos]||pos}</span>`;
 }
 function statusPill(status){
-  const m={active:'s-active',resigned:'s-resigned',terminated:'s-terminated'};
-  const l={active:'Active',resigned:'Resigned',terminated:'Terminated'};
+  const m={active:'s-active',resigned:'s-resigned',terminated:'s-terminated',other:'s-other'};
+  const l={active:'Active',resigned:'Resigned',terminated:'Terminated',other:'Transferred Out'};
   return `<span class="status-pill ${m[status]||'s-active'}">${l[status]||'Active'}</span>`;
 }
 
@@ -1545,15 +1552,23 @@ function openPromote(uid){
   document.getElementById('promote-pos').value=p?.position||'Operations Planner';
   document.getElementById('promote-level').value=p?.jobLevel||'';
   document.getElementById('promote-notes').value='';
+  document.getElementById('promote-other-desc').value='';
+  document.getElementById('promote-other-wrap').style.display='none';
+  document.getElementById('promote-pos').onchange=function(){
+    document.getElementById('promote-other-wrap').style.display=this.value==='__other__'?'block':'none';
+  };
   openModal('modal-promote');
 }
 
 async function savePromotion(){
+  const isOther = document.getElementById('promote-pos').value==='__other__';
   if(!promoteUID) return;
   const p=PLANNERS.find(x=>x.uid===promoteUID);
   if(!p){ toast('Not found','err'); return; }
   const date=document.getElementById('promote-date').value;
-  const newPos=document.getElementById('promote-pos').value;
+  const rawPos=document.getElementById('promote-pos').value;
+  const otherDesc=document.getElementById('promote-other-desc').value.trim();
+  const newPos=rawPos==='__other__'?(otherDesc||'Other'):rawPos;
   const newLevel=document.getElementById('promote-level').value;
   const notes=document.getElementById('promote-notes').value.trim();
   if(!date){ toast('Promotion date is required','err'); return; }
@@ -1574,9 +1589,10 @@ async function savePromotion(){
   else { history.push(promEvent); }
   const upd={ position:newPos, history:history };
   if(newLevel) upd.jobLevel=newLevel;
+  if(isOther){ upd.status='other'; upd.exitDate=date; } // deactivate from SPC
   try{
     await db.collection('planners').doc(p._id).update(upd);
-    toast(`Promotion recorded ✓ — ${p.firstName} is now ${newPos}`);
+    toast(`Promotion recorded ✓ — ${p.firstName} is now ${newPos}${isOther?' (Transferred Out)':''}`);
     closeModal('modal-promote');
     await loadPlanners();
     renderPlanners();
@@ -2144,10 +2160,11 @@ function renderTurnaround(){
     }
     // Must not be exited before this year entirely
     const st=p.status||'active';
-    if((st==='resigned'||st==='terminated')&&p.exitDate){
+    if((st==='resigned'||st==='terminated'||st==='other')&&p.exitDate){
       const ed=new Date(p.exitDate+'T00:00:00');
       if(ed<firstDay) return false;
     }
+    if(st==='other'&&!p.exitDate) return false; // transferred out, no exit date → exclude
     return true;
   }
 
@@ -2383,7 +2400,8 @@ function _refreshTotalsOnly(y){
     if(p.hireDate){const hd=new Date(p.hireDate+'T00:00:00');if(hd>lastDay) return false;}
     if(p.exitDate){const ed=new Date(p.exitDate+'T00:00:00');if(ed<firstDay) return false;}
     const st=p.status||'active';
-    if((st==='resigned'||st==='terminated')&&p.exitDate){const ed=new Date(p.exitDate+'T00:00:00');if(ed<firstDay) return false;}
+    if((st==='resigned'||st==='terminated'||st==='other')&&p.exitDate){const ed=new Date(p.exitDate+'T00:00:00');if(ed<firstDay) return false;}
+    if(st==='other'&&!p.exitDate) return false;
     return true;
   }
   const opsActual=[],supActual=[];
