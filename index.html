@@ -354,9 +354,9 @@ tbody tr:hover td{background:var(--bg3)}
 .h-score-calc{font-weight:700;color:var(--accent);min-width:24px;display:inline-block}
 .h-final-score{font-size:15px;font-weight:800;color:var(--accent)}
 .h-section-hdr{background:var(--navy3);color:var(--text2);font-size:10px;font-weight:700;padding:4px 8px;letter-spacing:.5px}
-.h-code-tip{position:relative;cursor:help;text-decoration:underline dotted var(--accent)}
-.h-code-tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:10px;font-weight:500;white-space:nowrap;padding:4px 8px;border-radius:5px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.h-code-tip:hover::after{opacity:1}
+.h-tip-wrap{position:relative;display:inline-block;cursor:help}
+.h-tip-wrap .h-tip-box{display:none;position:fixed;background:var(--navy);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;padding:5px 10px;border-radius:6px;pointer-events:none;z-index:99999;box-shadow:0 2px 10px rgba(0,0,0,.35);transform:translateX(-50%)}
+.h-tip-wrap:hover .h-tip-box{display:block}
 /* ── DECISION REGISTRY ── */
 .decision-tabs{display:flex;gap:4px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
 .decision-tab{height:26px;padding:0 14px;font-size:11px;font-weight:600;border-radius:var(--r);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;transition:background .12s}
@@ -1555,7 +1555,10 @@ async function savePromotion(){
     recordedAt:new Date().toISOString()
   };
   const history=Array.isArray(p.history) ? [...p.history] : _buildInitialHistory(p);
-  history.push(promEvent);
+  // Dedup: if a promotion already exists on the same date, replace it instead of adding a new one
+  const existingIdx = history.findIndex(h=>h.type==='promoted' && h.date===date);
+  if(existingIdx>=0){ history[existingIdx]=promEvent; }
+  else { history.push(promEvent); }
   const upd={ position:newPos, history:history };
   if(newLevel) upd.jobLevel=newLevel;
   try{
@@ -3108,7 +3111,7 @@ function renderHiringTable(){
   let html = `<div style="overflow-x:auto"><table class="h-table"><thead><tr>
     <th class="th-name" style="min-width:150px">Candidate</th>
     <th style="min-width:90px">Date</th>`;
-  codes.forEach((cd,i)=>{html+=`<th class="h-code-tip" data-tip="${criteria[i]}" style="min-width:36px;cursor:help">${cd}</th>`;});
+  codes.forEach((cd,i)=>{html+=`<th style="min-width:36px;overflow:visible"><div class="h-tip-wrap">${cd}<span class="h-tip-box">${criteria[i]}</span></div></th>`;});
   html+=`<th style="min-width:54px">Score</th><th style="min-width:90px">Decision</th><th style="min-width:160px">Comments</th><th style="min-width:80px"></th></tr></thead><tbody>`;
   legend = '';
 
