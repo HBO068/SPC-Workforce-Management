@@ -249,9 +249,9 @@ tbody tr:hover td{background:var(--bg3)}
 .fte-tbl td.need-cell input{width:36px;text-align:center;border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text);font-family:inherit}
 .fte-tbl td.need-cell input:focus{outline:1px solid var(--accent);border-radius:3px}
 .fte-actual{font-weight:700;color:var(--accent)}
-.fte-gap-pos{color:#16A34A;font-weight:700;text-align:center;background:#F0FDF4}
+.fte-gap-pos{color:#B45309;font-weight:700;text-align:center;background:#FFFBEB}
 .fte-gap-neg{color:#DC2626;font-weight:700;text-align:center;background:#FEF2F2}
-.fte-gap-zero{color:var(--text3);text-align:center}
+.fte-gap-zero{color:#16A34A;font-weight:700;text-align:center;background:#F0FDF4}
 .fte-row-need{background:var(--bg2)}
 .fte-row-total td{background:#EFF6FF;font-weight:700;text-align:center;border-top:2px solid var(--border)}
 .fte-row-actual{background:#F0FDF4}
@@ -338,6 +338,22 @@ tbody tr:hover td{background:var(--bg3)}
 .org-h-line{position:absolute;top:0;height:2px;background:var(--border2)}
 .org-root-highlight{border-color:var(--accent);background:linear-gradient(135deg,#f0fff8,#e8f7f0)}
 
+/* ── HIRING TABS ── */
+.htab{height:32px;padding:0 20px;font-size:12px;font-weight:600;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;transition:color .12s,border-color .12s}
+.htab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.h-table{width:100%;border-collapse:collapse;font-size:12px}
+.h-table th{background:var(--bg2);font-weight:700;text-align:center;padding:7px 8px;border:1px solid var(--border);font-size:11px;white-space:nowrap}
+.h-table th.th-name{text-align:left;min-width:140px}
+.h-table td{padding:6px 8px;border:1px solid var(--border);text-align:center;vertical-align:middle}
+.h-table td.td-name{text-align:left;font-weight:600}
+.h-table tr:hover td{background:var(--bg2)}
+.h-score-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px}
+.h-pass{background:#DCFCE7;color:#16A34A}.h-maybe{background:#FFFBEB;color:#B45309}.h-fail{background:#FEF2F2;color:#DC2626}
+.h-hired{background:#DBEAFE;color:#1D4ED8}.h-retained{background:#F0FDF4;color:#16A34A}
+.h-score-inp{width:36px;text-align:center;border:1px solid var(--border);border-radius:4px;padding:2px 4px;font-size:11px;background:var(--bg);color:var(--text)}
+.h-score-calc{font-weight:700;color:var(--accent);min-width:24px;display:inline-block}
+.h-final-score{font-size:15px;font-weight:800;color:var(--accent)}
+.h-section-hdr{background:var(--navy3);color:var(--text2);font-size:10px;font-weight:700;padding:4px 8px;letter-spacing:.5px}
 /* ── DECISION REGISTRY ── */
 .decision-tabs{display:flex;gap:4px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
 .decision-tab{height:26px;padding:0 14px;font-size:11px;font-weight:600;border-radius:var(--r);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;transition:background .12s}
@@ -410,6 +426,13 @@ tbody tr:hover td{background:var(--bg3)}
         <div class="sb-item" id="nav-organigram" onclick="showPage('organigram');renderOrganigram()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="4" rx="1"/><rect x="1" y="17" width="6" height="4" rx="1"/><rect x="9" y="17" width="6" height="4" rx="1"/><rect x="17" y="17" width="6" height="4" rx="1"/><path d="M12 6v4M4 17v-4h16v4"/></svg>
           Organigram
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-lbl">Hiring</div>
+        <div class="sb-item" id="nav-hiring" onclick="showPage('hiring');renderHiring()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Interviews &amp; Hiring
         </div>
       </div>
       <div class="sb-section">
@@ -728,6 +751,37 @@ tbody tr:hover td{background:var(--bg3)}
       </div>
 
       <!-- ══ SETTINGS PAGE ══ -->
+      <!-- ══ INTERVIEWS & HIRING PAGE ══ -->
+      <div class="page" id="page-hiring">
+        <div class="page-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <h2>Interviews &amp; Hiring Records</h2>
+          <button class="btn primary sm" onclick="openHiringModal()">+ Add Candidate</button>
+        </div>
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:18px">
+          <button class="htab active" id="htab-ops" onclick="switchHiringTab('ops')">OPS Planners</button>
+          <button class="htab" id="htab-intern" onclick="switchHiringTab('intern')">Interns</button>
+        </div>
+        <div id="hiring-table-wrap"></div>
+      </div>
+
+      <!-- Hiring Score Modal -->
+      <div class="mbg" id="modal-hiring">
+        <div class="modal" style="max-width:780px;width:95vw">
+          <div class="modal-hdr"><span id="hiring-modal-title">Add Candidate</span><button class="modal-close" onclick="closeModal('modal-hiring')">×</button></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="fl" style="flex:1;min-width:180px"><label class="lbl">Candidate Name</label><input id="h-name" type="text" placeholder="Full name" style="width:100%"></div>
+            <div class="fl" style="flex:0 0 160px"><label class="lbl">Interview Date</label><input id="h-date" type="date" style="width:100%"></div>
+            <div class="fl" style="flex:0 0 180px"><label class="lbl">Decision</label><select id="h-decision" style="width:100%"><option value="">— Select —</option></select></div>
+          </div>
+          <div id="h-scores-wrap" style="overflow-x:auto;margin-bottom:14px"></div>
+          <div class="fl"><label class="lbl">Comments</label><textarea id="h-comments" rows="2" style="width:100%;resize:vertical"></textarea></div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+            <button class="btn sm" onclick="closeModal('modal-hiring')">Cancel</button>
+            <button class="btn primary sm" onclick="saveHiringCandidate()">Save</button>
+          </div>
+        </div>
+      </div>
+
       <div class="page" id="page-settings">
         <div class="settings-wrap">
           <!-- Year selector -->
@@ -1117,6 +1171,7 @@ function showPage(id){
   if(id==='settings') renderSettingsHolidays();
   if(id==='turnaround'){ _initTTYear(); loadFTEData().then(()=>renderTurnaround()); }
   if(id==='leaves') renderLeaves();
+  if(id==='hiring') renderHiring();
 }
 
 // ══════════════════════════════════════
@@ -2117,10 +2172,10 @@ function renderTurnaround(){
   }
 
   const terminals=FTE_DATA.terminals||[];
-  const yearNeeds=(FTE_DATA.needs||{})[y]||{};
+  const yearNeeds=(FTE_DATA.needs||{})[String(y)]||{};
 
-  function gapClass(g){ return g>=0?'fte-gap-pos':'fte-gap-neg'; }
-  function gapSign(g){ return g>0?'+'+g:g; }
+  function gapClass(g){ return g>0?'fte-gap-pos':g<0?'fte-gap-neg':'fte-gap-zero'; }
+  function gapSign(g){ return g>0?'+'+g:g===0?'0':g; }
 
   // ── OPS Planners table ──
   function buildOpsTable(){
@@ -2149,7 +2204,7 @@ function renderTurnaround(){
           </td>`;
         for(let m=0;m<12;m++){
           const val=termNeeds[m]!==undefined?termNeeds[m]:'';
-          h+=`<td class="need-cell"><input type="number" min="0" value="${val}" onchange="saveNeed('${term}',${m},${y},this.value)" placeholder="—"></td>`;
+          h+=`<td class="need-cell"><input type="number" min="0" value="${val}" oninput="saveNeed('${term}',${m},${y},this.value)" placeholder="—"></td>`;
         }
         h+=`</tr>`;
       });
@@ -2158,7 +2213,7 @@ function renderTurnaround(){
     }
 
     // Total Planners Needed row
-    h+=`<tr class="fte-row-total"><td class="row-hdr" style="font-size:10px;font-weight:700;color:var(--text1)">Total Planners Needed</td>`;
+    h+=`<tr class="fte-row-total" id="fte-total-row"><td class="row-hdr" style="font-size:10px;font-weight:700;color:var(--text1)">Total Planners Needed</td>`;
     const totalNeeds=[];
     for(let m=0;m<12;m++){
       let sum=0; let hasAny=false;
@@ -2172,14 +2227,14 @@ function renderTurnaround(){
     h+=`</tr>`;
 
     // Actual row
-    h+=`<tr class="fte-row-actual"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600">Actual</td>`;
+    h+=`<tr class="fte-row-actual" id="fte-ops-actual-row"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600">Actual</td>`;
     for(let m=0;m<12;m++){
       h+=`<td class="fte-actual">${opsActual[m]}</td>`;
     }
     h+=`</tr>`;
 
     // Gap row
-    h+=`<tr class="fte-row-gap"><td class="row-hdr" style="font-size:9px;color:var(--text3)">Gap</td>`;
+    h+=`<tr class="fte-row-gap" id="fte-ops-gap-row"><td class="row-hdr" style="font-size:9px;color:var(--text3)">Gap</td>`;
     for(let m=0;m<12;m++){
       const need=totalNeeds[m];
       if(need===null){ h+=`<td style="text-align:center;color:var(--text3)">—</td>`; }
@@ -2232,19 +2287,19 @@ function renderTurnaround(){
     h+=`<tr class="fte-row-need"><td class="row-hdr" style="font-size:9px;color:var(--text3);font-weight:600">Need</td>`;
     for(let m=0;m<12;m++){
       const val=supNeeds[m]!==undefined?supNeeds[m]:'';
-      h+=`<td class="need-cell"><input type="number" min="0" value="${val}" onchange="saveNeed('__sup__',${m},${y},this.value)" placeholder="—"></td>`;
+      h+=`<td class="need-cell"><input type="number" min="0" value="${val}" oninput="saveNeed('__sup__',${m},${y},this.value)" placeholder="—"></td>`;
     }
     h+=`</tr>`;
 
     // Actual
-    h+=`<tr class="fte-row-actual"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600">Actual</td>`;
+    h+=`<tr class="fte-row-actual" id="fte-sup-actual-row"><td class="row-hdr" style="font-size:9px;color:var(--accent);font-weight:600">Actual</td>`;
     for(let m=0;m<12;m++){
       h+=`<td class="fte-actual">${supActual[m]}</td>`;
     }
     h+=`</tr>`;
 
     // Gap
-    h+=`<tr class="fte-row-gap"><td class="row-hdr" style="font-size:9px;color:var(--text3)">Gap</td>`;
+    h+=`<tr class="fte-row-gap" id="fte-sup-gap-row"><td class="row-hdr" style="font-size:9px;color:var(--text3)">Gap</td>`;
     for(let m=0;m<12;m++){
       const need=supNeeds[m]!==undefined?parseInt(supNeeds[m])||0:null;
       if(need===null){ h+=`<td style="text-align:center;color:var(--text3)">—</td>`; }
@@ -2276,14 +2331,76 @@ function renderTurnaround(){
   body.innerHTML = buildOpsTable() + buildSupTable();
 }
 
-async function saveNeed(terminal, month, year, value){
+// Debounce timer for need inputs
+const _needTimers={};
+function saveNeed(terminal, month, year, value){
+  // Update local data immediately so totals/gaps reflect new value right away
+  const yStr=String(year);
   if(!FTE_DATA.needs) FTE_DATA.needs={};
-  if(!FTE_DATA.needs[year]) FTE_DATA.needs[year]={};
-  if(!FTE_DATA.needs[year][terminal]) FTE_DATA.needs[year][terminal]={};
+  if(!FTE_DATA.needs[yStr]) FTE_DATA.needs[yStr]={};
+  if(!FTE_DATA.needs[yStr][terminal]) FTE_DATA.needs[yStr][terminal]={};
   const v=parseInt(value);
-  if(isNaN(v)||value===''){ delete FTE_DATA.needs[year][terminal][month]; }
-  else{ FTE_DATA.needs[year][terminal][month]=v; }
-  try{ await saveFTEData(); renderTurnaround(); }catch(e){ toast('Could not save need: '+e.message,'error'); }
+  if(isNaN(v)||value===''){ delete FTE_DATA.needs[yStr][terminal][month]; }
+  else{ FTE_DATA.needs[yStr][terminal][month]=v; }
+  // Refresh only the summary rows (Total/Actual/Gap) without destroying inputs
+  _refreshTotalsOnly(year);
+  // Debounce Firestore write — wait 700ms after user stops typing
+  const key=`${terminal}-${month}-${yStr}`;
+  clearTimeout(_needTimers[key]);
+  _needTimers[key]=setTimeout(async()=>{
+    try{ await saveFTEData(); }
+    catch(e){ toast('Could not save: '+e.message,'error'); }
+  },700);
+}
+
+// Refresh only the computed rows (Total Need, Actual, Gap) without touching input cells
+function _refreshTotalsOnly(y){
+  const yStr=String(y);
+  const yearNeeds=(FTE_DATA.needs||{})[yStr]||{};
+  const terminals=FTE_DATA.terminals||[];
+  // Recompute opsActual for current year
+  function isActiveInMonth(p,yr,m){
+    const firstDay=new Date(yr,m,1);const lastDay=new Date(yr,m+1,0);
+    if(p.hireDate){const hd=new Date(p.hireDate+'T00:00:00');if(hd>lastDay) return false;}
+    if(p.exitDate){const ed=new Date(p.exitDate+'T00:00:00');if(ed<firstDay) return false;}
+    const st=p.status||'active';
+    if((st==='resigned'||st==='terminated')&&p.exitDate){const ed=new Date(p.exitDate+'T00:00:00');if(ed<firstDay) return false;}
+    return true;
+  }
+  const opsActual=[],supActual=[];
+  for(let m=0;m<12;m++){
+    opsActual.push(PLANNERS.filter(p=>{const pos=(p.position||'').toLowerCase();return pos.includes('operations planner')||pos.includes('ops planner');}).filter(p=>isActiveInMonth(p,parseInt(yStr),m)).length);
+    supActual.push(PLANNERS.filter(p=>{const pos=(p.position||'').toLowerCase();return pos.includes('supervisor');}).filter(p=>isActiveInMonth(p,parseInt(yStr),m)).length);
+  }
+  function gapClass(g){ return g>0?'fte-gap-pos':g<0?'fte-gap-neg':'fte-gap-zero'; }
+  function gapSign(g){ return g>0?'+'+g:g===0?'0':g; }
+  // Update OPS total/actual/gap cells
+  const totalRow=document.getElementById('fte-total-row');
+  const actualRow=document.getElementById('fte-ops-actual-row');
+  const gapRow=document.getElementById('fte-ops-gap-row');
+  if(totalRow&&actualRow&&gapRow){
+    for(let m=0;m<12;m++){
+      let sum=0;let hasAny=false;
+      terminals.forEach(term=>{const v=(yearNeeds[term]||{})[m];if(v!==undefined){sum+=parseInt(v)||0;hasAny=true;}});
+      totalRow.cells[m+1].textContent=hasAny?sum:'—';
+      actualRow.cells[m+1].textContent=opsActual[m];
+      const need=hasAny?sum:null;
+      if(need===null){gapRow.cells[m+1].className='';gapRow.cells[m+1].textContent='—';}
+      else{const gap=need-opsActual[m];gapRow.cells[m+1].className=gapClass(gap);gapRow.cells[m+1].textContent=gapSign(gap);}
+    }
+  }
+  // Update Supervisor actual/gap cells
+  const supNeeds=(yearNeeds['__sup__']||{});
+  const supActualRow=document.getElementById('fte-sup-actual-row');
+  const supGapRow=document.getElementById('fte-sup-gap-row');
+  if(supActualRow&&supGapRow){
+    for(let m=0;m<12;m++){
+      supActualRow.cells[m+1].textContent=supActual[m];
+      const need=supNeeds[m]!==undefined?parseInt(supNeeds[m])||0:null;
+      if(need===null){supGapRow.cells[m+1].className='';supGapRow.cells[m+1].textContent='—';}
+      else{const gap=need-supActual[m];supGapRow.cells[m+1].className=gapClass(gap);supGapRow.cells[m+1].textContent=gapSign(gap);}
+    }
+  }
 }
 
 function openAddTerminal(){
@@ -2903,6 +3020,260 @@ function renderRegistry(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ══════════════════════════════════════
+// INTERVIEWS & HIRING
+// ══════════════════════════════════════
+let _hiringTab = 'ops';
+let _hiringRecords = [];   // cached from Firestore
+let _hiringEditId = null;  // null = new, else doc id
+
+const OPS_CRITERIA = [
+  'English','Shift','Knowledge about Company & Position',
+  'Skills & Experience','Learning Capabilities',
+  'Teamwork & Collaboration','Communication',
+  'Values & Work Ethics','Conflict Management',
+  'Multi-Tasking & Detail Orientation',
+  'Positive Attitude & Sense of Engagement',
+  'Stakeholder Management','Sense of Responsibility'
+];
+const INTERN_CRITERIA = [
+  'English','Shift','Attitude & Engagement','Knowledge about Company'
+];
+
+function roundScore(avg){ return (avg - Math.floor(avg)) > 0.5 ? Math.ceil(avg) : Math.floor(avg); }
+
+function calcCriterionScore(vals){
+  const nums = vals.map(v=>parseFloat(v)).filter(v=>!isNaN(v)&&v>=1&&v<=3);
+  if(!nums.length) return '';
+  const avg = nums.reduce((a,b)=>a+b,0)/nums.length;
+  return roundScore(avg);
+}
+
+async function loadHiringRecords(){
+  if(!db) return;
+  const snap = await db.collection('interviews').get();
+  _hiringRecords = snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+async function saveHiringRecord(rec){
+  if(!db) return;
+  if(rec.id){
+    const {id,...data}=rec;
+    await db.collection('interviews').doc(id).set(data);
+  } else {
+    const ref = await db.collection('interviews').add(rec);
+    rec.id = ref.id;
+  }
+}
+
+async function deleteHiringRecord(id){
+  if(!db) return;
+  await db.collection('interviews').doc(id).delete();
+}
+
+function switchHiringTab(tab){
+  _hiringTab = tab;
+  document.getElementById('htab-ops').classList.toggle('active', tab==='ops');
+  document.getElementById('htab-intern').classList.toggle('active', tab==='intern');
+  renderHiringTable();
+}
+
+async function renderHiring(){
+  await loadHiringRecords();
+  renderHiringTable();
+}
+
+function renderHiringTable(){
+  const wrap = document.getElementById('hiring-table-wrap');
+  if(!wrap) return;
+  const records = _hiringRecords.filter(r=>r.type===_hiringTab).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const criteria = _hiringTab==='ops' ? OPS_CRITERIA : INTERN_CRITERIA;
+  const raters   = _hiringTab==='ops' ? ['I1','I2','I3'] : ['I1','I2'];
+  const decisions = _hiringTab==='ops'
+    ? ['Passed','Rejected','Hired']
+    : ['Retained','Rejected'];
+
+  if(!records.length){
+    wrap.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text2)">No candidates yet. Click <b>+ Add Candidate</b> to start.</div>`;
+    return;
+  }
+
+  // Build summary table
+  let html = `<div style="overflow-x:auto"><table class="h-table"><thead><tr>
+    <th class="th-name">Candidate</th>
+    <th>Date</th>`;
+  criteria.forEach(c=>{html+=`<th title="${c}">${c.split(' ')[0]}</th>`;});
+  html+=`<th>Score</th><th>Decision</th><th>Comments</th><th></th></tr></thead><tbody>`;
+
+  records.forEach(r=>{
+    const scores = criteria.map(c=>{
+      const vals = raters.map(rt=>(r.scores||{})[c]?.[rt]||'');
+      return calcCriterionScore(vals);
+    });
+    const total = scores.reduce((a,v)=>a+(typeof v==='number'?v:0),0);
+    const dec = r.decision||'';
+    let decClass='';
+    if(dec==='Passed') decClass='h-pass';
+    else if(dec==='Hired') decClass='h-hired';
+    else if(dec==='Retained') decClass='h-retained';
+    else if(dec==='Rejected') decClass='h-fail';
+
+    html+=`<tr>
+      <td class="td-name">${r.name||'—'}</td>
+      <td>${r.date||'—'}</td>`;
+    scores.forEach(s=>{ html+=`<td>${s===''?'—':s}</td>`; });
+    html+=`<td><span class="h-final-score">${total||0}</span></td>
+      <td>${dec?`<span class="h-score-badge ${decClass}">${dec}</span>`:'—'}</td>
+      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.comments||''}</td>
+      <td style="white-space:nowrap">
+        <button class="btn sm" onclick="editHiringRecord('${r.id}')">Edit</button>
+        <button class="btn sm" style="color:#DC2626" onclick="deleteHiringPrompt('${r.id}')">Del</button>
+      </td></tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  wrap.innerHTML = html;
+}
+
+function openHiringModal(type){
+  _hiringEditId = null;
+  const t = _hiringTab;
+  document.getElementById('hiring-modal-title').textContent = 'Add Candidate — '+(t==='ops'?'OPS Planner':'Intern');
+  document.getElementById('h-name').value='';
+  document.getElementById('h-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('h-comments').value='';
+  _buildHiringDecisionSelect(t);
+  _buildHiringScoreGrid(t, null);
+  openModal('modal-hiring');
+}
+
+function editHiringRecord(id){
+  const rec = _hiringRecords.find(r=>r.id===id);
+  if(!rec) return;
+  _hiringEditId = id;
+  const t = rec.type;
+  document.getElementById('hiring-modal-title').textContent = 'Edit Candidate — '+(t==='ops'?'OPS Planner':'Intern');
+  document.getElementById('h-name').value = rec.name||'';
+  document.getElementById('h-date').value = rec.date||'';
+  document.getElementById('h-comments').value = rec.comments||'';
+  _buildHiringDecisionSelect(t, rec.decision);
+  _buildHiringScoreGrid(t, rec.scores||{});
+  openModal('modal-hiring');
+}
+
+function _buildHiringDecisionSelect(type, selected=''){
+  const sel = document.getElementById('h-decision');
+  const opts = type==='ops' ? ['Passed','Rejected','Hired'] : ['Retained','Rejected'];
+  sel.innerHTML = '<option value="">— Select —</option>' + opts.map(o=>`<option value="${o}"${o===selected?' selected':''}>${o}</option>`).join('');
+}
+
+function _buildHiringScoreGrid(type, scores){
+  const criteria = type==='ops' ? OPS_CRITERIA : INTERN_CRITERIA;
+  const raters   = type==='ops' ? ['I1','I2','I3'] : ['I1','I2'];
+  const wrap = document.getElementById('h-scores-wrap');
+
+  let html=`<table class="h-table" style="min-width:500px"><thead><tr>
+    <th class="th-name" style="min-width:200px">Criterion</th>`;
+  raters.forEach(r=>{ html+=`<th style="min-width:60px">${r}</th>`; });
+  html+=`<th>Criterion Score</th></tr></thead><tbody>`;
+
+  criteria.forEach((c,i)=>{
+    const vals = raters.map(rt=>(scores||{})[c]?.[rt]||'');
+    const calc = scores ? calcCriterionScore(vals) : '';
+    html+=`<tr><td class="td-name">${c}</td>`;
+    raters.forEach((rt,ri)=>{
+      const v = vals[ri];
+      html+=`<td><input class="h-score-inp" type="number" min="1" max="3" step="1"
+        id="hs-${i}-${ri}" value="${v}"
+        oninput="_recalcRow(${i},${raters.length},'${encodeURIComponent(c)}')"></td>`;
+    });
+    html+=`<td><span class="h-score-calc" id="hc-${i}">${calc===''?'—':calc}</span></td></tr>`;
+  });
+
+  // totals row
+  html+=`<tr style="border-top:2px solid var(--border)">
+    <td colspan="${1+raters.length}" style="text-align:right;font-weight:700">Total Score</td>
+    <td><span class="h-score-calc" id="hc-total" style="font-size:16px;color:var(--accent)">—</span></td>
+  </tr></tbody></table>`;
+  wrap.innerHTML = html;
+
+  // compute totals if editing
+  if(scores){
+    criteria.forEach((c,i)=>_recalcRow(i, raters.length, encodeURIComponent(c)));
+  }
+}
+
+function _recalcRow(idx, nRaters, encCrit){
+  const vals=[];
+  for(let ri=0;ri<nRaters;ri++){
+    const el=document.getElementById(`hs-${idx}-${ri}`);
+    if(el) vals.push(el.value);
+  }
+  const cs = calcCriterionScore(vals);
+  const el = document.getElementById(`hc-${idx}`);
+  if(el) el.textContent = cs===''?'—':cs;
+
+  // update total
+  const allCalcs = document.querySelectorAll('[id^="hc-"]:not(#hc-total)');
+  let total=0;
+  allCalcs.forEach(el=>{ const v=parseInt(el.textContent); if(!isNaN(v)) total+=v; });
+  const tot=document.getElementById('hc-total');
+  if(tot) tot.textContent=total||'—';
+}
+
+async function saveHiringCandidate(){
+  const name = document.getElementById('h-name').value.trim();
+  const date = document.getElementById('h-date').value;
+  const decision = document.getElementById('h-decision').value;
+  const comments = document.getElementById('h-comments').value.trim();
+  if(!name){ toast('Please enter candidate name','warn'); return; }
+
+  const type = _hiringEditId
+    ? (_hiringRecords.find(r=>r.id===_hiringEditId)||{}).type || _hiringTab
+    : _hiringTab;
+  const criteria = type==='ops' ? OPS_CRITERIA : INTERN_CRITERIA;
+  const raters   = type==='ops' ? ['I1','I2','I3'] : ['I1','I2'];
+
+  // collect scores
+  const scores = {};
+  criteria.forEach((c,i)=>{
+    scores[c]={};
+    raters.forEach((rt,ri)=>{
+      const el=document.getElementById(`hs-${i}-${ri}`);
+      if(el && el.value!=='') scores[c][rt]=parseFloat(el.value)||'';
+    });
+  });
+
+  const rec = { type, name, date, decision, comments, scores,
+    updatedAt: new Date().toISOString() };
+  if(_hiringEditId) rec.id = _hiringEditId;
+
+  try{
+    await saveHiringRecord(rec);
+    // update local cache
+    if(_hiringEditId){
+      const idx=_hiringRecords.findIndex(r=>r.id===_hiringEditId);
+      if(idx>=0) _hiringRecords[idx]=rec;
+    } else {
+      _hiringRecords.push(rec);
+    }
+    closeModal('modal-hiring');
+    renderHiringTable();
+    toast('Candidate saved');
+  } catch(e){ toast('Error saving: '+e.message,'err'); }
+}
+
+async function deleteHiringPrompt(id){
+  const rec=_hiringRecords.find(r=>r.id===id);
+  if(!rec) return;
+  if(!confirm(`Delete candidate "${rec.name}"?`)) return;
+  try{
+    await deleteHiringRecord(id);
+    _hiringRecords=_hiringRecords.filter(r=>r.id!==id);
+    renderHiringTable();
+    toast('Candidate deleted');
+  } catch(e){ toast('Error: '+e.message,'err'); }
 }
 
 // ══════════════════════════════════════
