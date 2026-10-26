@@ -3108,7 +3108,7 @@ function renderHiringTable(){
   let html = `<div style="overflow-x:auto"><table class="h-table"><thead><tr>
     <th class="th-name" style="min-width:150px">Candidate</th>
     <th style="min-width:90px">Date</th>`;
-  codes.forEach((cd,i)=>{html+=`<th style="min-width:36px"><span class="h-code-tip" data-tip="${criteria[i]}">${cd}</span></th>`;});
+  codes.forEach((cd,i)=>{html+=`<th class="h-code-tip" data-tip="${criteria[i]}" style="min-width:36px;cursor:help">${cd}</th>`;});
   html+=`<th style="min-width:54px">Score</th><th style="min-width:90px">Decision</th><th style="min-width:160px">Comments</th><th style="min-width:80px"></th></tr></thead><tbody>`;
   legend = '';
 
@@ -3128,8 +3128,14 @@ function renderHiringTable(){
     html+=`<tr>
       <td class="td-name">${r.name||'—'}</td>
       <td>${r.date||'—'}</td>`;
-    scores.forEach(s=>{ html+=`<td style="font-size:12px">${s===''?'—':s}</td>`; });
-    html+=`<td><span class="h-final-score">${total||0}</span></td>
+    scores.forEach(s=>{
+      const sc = typeof s==='number'?s:null;
+      const bg = sc===1?'#DCFCE7':sc===2?'#FFFBEB':sc===3?'#FEE2E2':'';
+      const col = sc===1?'#16A34A':sc===2?'#B45309':sc===3?'#DC2626':'';
+      html+=`<td style="font-size:12px;font-weight:700;background:${bg};color:${col}">${sc===null?'—':sc}</td>`;
+    });
+    const scoreColor = total>26?'#DC2626':total>0?'#16A34A':'var(--text3)';
+    html+=`<td><span class="h-final-score" style="color:${scoreColor}">${total||0}</span></td>
       <td>${dec?`<span class="h-score-badge ${decClass}">${dec}</span>`:'—'}</td>
       <td style="text-align:left;max-width:200px;white-space:pre-wrap;word-break:break-word;font-size:11px;color:var(--text2)">${r.comments||''}</td>
       <td style="white-space:nowrap">
