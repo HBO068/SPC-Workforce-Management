@@ -3111,7 +3111,9 @@ function renderHiringTable(){
   let html = `<div style="overflow-x:auto"><table class="h-table"><thead><tr>
     <th class="th-name" style="min-width:150px">Candidate</th>
     <th style="min-width:90px">Date</th>`;
-  codes.forEach((cd,i)=>{html+=`<th style="min-width:36px;overflow:visible"><div class="h-tip-wrap">${cd}<span class="h-tip-box">${criteria[i]}</span></div></th>`;});
+  codes.forEach((cd,i)=>{
+    html+=`<th style="min-width:38px;font-size:11px;font-weight:700;color:var(--accent);position:relative;overflow:visible" onmouseenter="showHdrTip(event,'${criteria[i]}')" onmouseleave="hideHdrTip()">${cd}</th>`;
+  });
   html+=`<th style="min-width:54px">Score</th><th style="min-width:90px">Decision</th><th style="min-width:160px">Comments</th><th style="min-width:80px"></th></tr></thead><tbody>`;
   legend = '';
 
@@ -3293,6 +3295,19 @@ async function deleteHiringPrompt(id){
     toast('Candidate deleted');
   } catch(e){ toast('Error: '+e.message,'err'); }
 }
+
+// ══════════════════════════════════════
+// HEADER TOOLTIP
+// ══════════════════════════════════════
+let _hdrTip = null;
+function showHdrTip(e, text){
+  if(!_hdrTip){ _hdrTip=document.createElement('div'); _hdrTip.style.cssText='position:fixed;background:#0C1E2E;color:#fff;font-size:11px;padding:5px 10px;border-radius:6px;pointer-events:none;z-index:99999;box-shadow:0 2px 10px rgba(0,0,0,.4);white-space:nowrap'; document.body.appendChild(_hdrTip); }
+  _hdrTip.textContent = text;
+  _hdrTip.style.display = 'block';
+  _hdrTip.style.left = (e.clientX - _hdrTip.offsetWidth/2) + 'px';
+  _hdrTip.style.top  = (e.clientY - 36) + 'px';
+}
+function hideHdrTip(){ if(_hdrTip) _hdrTip.style.display='none'; }
 
 // ══════════════════════════════════════
 // INIT
