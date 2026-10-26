@@ -474,6 +474,9 @@ tbody tr:hover td{background:var(--bg3)}
               <option>Head of SPC</option>
               <option>Data Analyst</option>
             </select>
+            <select id="p-hire-year" onchange="renderPlanners()" style="width:120px">
+              <option value="">All Hire Years</option>
+            </select>
             <select id="p-status-fil" onchange="renderPlanners()">
               <option value="active">Active only</option>
               <option value="all">All</option>
@@ -1267,10 +1270,19 @@ function statusPill(status){
 // ══════════════════════════════════════
 // PLANNERS
 // ══════════════════════════════════════
+function _populateHireYears(){
+  const sel = document.getElementById('p-hire-year');
+  if(!sel) return;
+  const cur = sel.value;
+  const years = [...new Set(PLANNERS.map(p=>(p.hireDate||'').slice(0,4)).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All Hire Years</option>' + years.map(y=>`<option value="${y}"${y===cur?' selected':''}>${y}</option>`).join('');
+}
 function renderPlanners(){
+  _populateHireYears();
   const q   = (document.getElementById('p-search').value||'').toLowerCase();
   const pos = document.getElementById('p-pos-fil').value;
   const st  = document.getElementById('p-status-fil').value;
+  const hy  = document.getElementById('p-hire-year').value;
   const tbody = document.getElementById('p-tbody');
   const list = PLANNERS.filter(p=>{
     const name = ((p.firstName||'')+(p.lastName||'')+(p.uid||'')).toLowerCase();
@@ -1278,7 +1290,8 @@ function renderPlanners(){
     const matchPos = !pos || p.position===pos;
     const pst = p.status||'active';
     const matchSt  = st==='all' ? true : pst===st;
-    return matchQ && matchPos && matchSt;
+    const matchHY  = !hy || (p.hireDate||'').startsWith(hy);
+    return matchQ && matchPos && matchSt && matchHY;
   });
   if(!list.length){
     tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No employees found</td></tr>`;
