@@ -3113,7 +3113,7 @@ function renderHiringTable(){
   let html = `<div style="overflow-x:auto"><table class="h-table"><thead><tr>
     <th class="th-name" style="min-width:150px">Candidate</th>
     <th style="min-width:90px">Date</th>`;
-  codes.forEach((cd,i)=>{html+=`<th style="min-width:36px"><span class="h-code-tip" data-tip="${criteria[i]}">${cd}</span></th>`;});}
+  codes.forEach((cd,i)=>{html+=`<th style="min-width:36px"><span class="h-code-tip" data-tip="${criteria[i]}">${cd}</span></th>`;});
   html+=`<th style="min-width:54px">Score</th><th style="min-width:90px">Decision</th><th style="min-width:160px">Comments</th><th style="min-width:80px"></th></tr></thead><tbody>`;
 
   records.forEach(r=>{
