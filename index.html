@@ -2173,7 +2173,9 @@ async function loadFTEData(){
 }
 
 async function saveFTEData(){
-  await db.collection('settings').doc('fte_data').set(FTE_DATA);
+  // Deep-clone to avoid Firestore rejecting undefined values
+  const payload=JSON.parse(JSON.stringify(FTE_DATA));
+  await db.collection('settings').doc('fte_data').set(payload);
 }
 
 function _initTTYear(){
@@ -2247,12 +2249,14 @@ function renderTurnaround(){
         } else if(h.type==='promoted'){
           const from=h.fromPosition||'';
           const to=h.toPosition||curPos;
-          // For OPS: promoted OUT (from ops to something else → counts as promoted in ops)
-          if(role==='ops'&&isOpsPos(from)) ev.promoted++;
-          // For SUP: promoted IN from ops → counts as "hired" entry for supervisors
-          if(role==='sup'&&isSupPos(to)&&!isSupPos(from)) ev.hired++;
-          // For SUP: promoted within or out of sup pool
-          if(role==='sup'&&isSupPos(from)&&isSupPos(to)) ev.promoted++;
+          // OPS: any promotion OUT of ops planner → -1 from planner pool
+          if(role==='ops' && isOpsPos(from)) ev.promoted++;
+          // SUP: promotion FROM ops planner INTO supervisor → counts as +1 hire for sup
+          if(role==='sup' && isOpsPos(from) && isSupPos(to)) ev.hired++;
+          // SUP: promotion OUT of supervisor (to anything else) → -1 from sup pool
+          if(role==='sup' && isSupPos(from) && !isSupPos(to)) ev.promoted++;
+          // Promotions into ops from outside = ignored (external hire, not our pipeline)
+          // Promotions into sup from outside (non-ops) = ignored
         }
       });
     });
