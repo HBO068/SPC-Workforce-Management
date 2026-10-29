@@ -2259,17 +2259,48 @@ function renderTurnaround(){
     return ev;
   }
 
-  // Compute actuals
+  // Get the employee's position AS OF the last day of month m in year y
+  // by replaying promotions chronologically up to that date
+  function positionAtMonth(p, y, m){
+    const lastDay=new Date(y,m+1,0); // last day of month
+    const lastDayStr=lastDay.toISOString().split('T')[0];
+    // Start from the hire position (earliest known)
+    let pos = p.position || '';
+    // Find all promotions sorted by date, apply only those BEFORE end of month
+    const promotions = (p.history||[])
+      .filter(h=>h.type==='promoted' && h.date && h.date<=lastDayStr)
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    if(promotions.length){
+      // Walk back to find earliest known position before any promotions
+      const firstProm = promotions[0];
+      pos = firstProm.fromPosition || pos;
+      // Apply all promotions up to this month
+      promotions.forEach(h=>{ pos = h.toPosition || pos; });
+    } else {
+      // No promotions before this month — use hire position if available
+      // (current position may be after a future promotion, so walk back)
+      const allPromotions = (p.history||[])
+        .filter(h=>h.type==='promoted' && h.date)
+        .sort((a,b)=>a.date.localeCompare(b.date));
+      if(allPromotions.length && allPromotions[0].date > lastDayStr){
+        // All promotions are in the future relative to this month
+        pos = allPromotions[0].fromPosition || pos;
+      }
+    }
+    return pos;
+  }
+
+  // Compute actuals — using position AT that month, not current position
   const opsActual=[], supActual=[];
   for(let m=0;m<12;m++){
     opsActual.push(PLANNERS.filter(p=>{
-      const pos=(p.position||'').toLowerCase();
-      return pos.includes('operations planner')||pos.includes('ops planner')||pos==='ops pln';
-    }).filter(p=>isActiveInMonth(p,y,m)).length);
+      if(!isActiveInMonth(p,y,m)) return false;
+      return isOpsPos(positionAtMonth(p,y,m));
+    }).length);
     supActual.push(PLANNERS.filter(p=>{
-      const pos=(p.position||'').toLowerCase();
-      return pos.includes('supervisor')||pos==='sup';
-    }).filter(p=>isActiveInMonth(p,y,m)).length);
+      if(!isActiveInMonth(p,y,m)) return false;
+      return isSupPos(positionAtMonth(p,y,m));
+    }).length);
   }
 
   const terminals=FTE_DATA.terminals||[];
@@ -2470,10 +2501,21 @@ function _refreshTotalsOnly(y){
     if(st==='other'&&!p.exitDate) return false;
     return true;
   }
+  function posAtMonth(p,yr,m){
+    const lastDayStr=new Date(yr,m+1,0).toISOString().split('T')[0];
+    let pos=p.position||'';
+    const proms=(p.history||[]).filter(h=>h.type==='promoted'&&h.date).sort((a,b)=>a.date.localeCompare(b.date));
+    const before=proms.filter(h=>h.date<=lastDayStr);
+    const after=proms.filter(h=>h.date>lastDayStr);
+    if(before.length){pos=proms[0].fromPosition||pos;before.forEach(h=>{pos=h.toPosition||pos;});}
+    else if(after.length){pos=after[0].fromPosition||pos;}
+    return pos;
+  }
   const opsActual=[],supActual=[];
+  const yr=parseInt(yStr);
   for(let m=0;m<12;m++){
-    opsActual.push(PLANNERS.filter(p=>{const pos=(p.position||'').toLowerCase();return pos.includes('operations planner')||pos.includes('ops planner');}).filter(p=>isActiveInMonth(p,parseInt(yStr),m)).length);
-    supActual.push(PLANNERS.filter(p=>{const pos=(p.position||'').toLowerCase();return pos.includes('supervisor');}).filter(p=>isActiveInMonth(p,parseInt(yStr),m)).length);
+    opsActual.push(PLANNERS.filter(p=>{if(!isActiveInMonth(p,yr,m))return false;const pos=posAtMonth(p,yr,m).toLowerCase();return pos.includes('operations planner')||pos.includes('ops planner');}).length);
+    supActual.push(PLANNERS.filter(p=>{if(!isActiveInMonth(p,yr,m))return false;return posAtMonth(p,yr,m).toLowerCase().includes('supervisor');}).length);
   }
   function gapClass(g){ return g>0?'fte-gap-pos':g<0?'fte-gap-neg':'fte-gap-zero'; }
   function gapSign(g){ return g>0?'+'+g:g===0?'0':g; }
