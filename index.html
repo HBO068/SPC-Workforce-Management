@@ -994,9 +994,12 @@ tbody tr:hover td{background:var(--bg3)}
     <h3 id="exit-modal-title">Register Exit</h3>
     <div class="fl">
       <label class="lbl">Exit Type</label>
-      <select id="exit-type">
+      <select id="exit-type" onchange="updateExitReasons()">
         <option value="resigned">Resignation</option>
-        <option value="terminated">Termination of Contract</option>
+        <option value="terminated-behaviour">Termination — Behavioural</option>
+        <option value="terminated-performance">Termination — Performance</option>
+        <option value="terminated-contract">Termination — Contract End</option>
+        <option value="terminated">Termination — Other</option>
       </select>
     </div>
     <div class="fl">
@@ -1004,18 +1007,8 @@ tbody tr:hover td{background:var(--bg3)}
       <input type="date" id="exit-date">
     </div>
     <div class="fl">
-      <label class="lbl">Reason</label>
-      <select id="exit-reason">
-        <option>Own Project</option>
-        <option>Salary &amp; Opportunities</option>
-        <option>Personal issues</option>
-        <option>Health issues</option>
-        <option>Mariage</option>
-        <option>Performance</option>
-        <option>Behavioural Issues</option>
-        <option>Contract End</option>
-        <option>Other</option>
-      </select>
+      <label class="lbl">Reason / Detail</label>
+      <select id="exit-reason"></select>
     </div>
     <div class="fl">
       <label class="lbl">Notes</label>
@@ -1516,25 +1509,45 @@ function _updateBalanceFields(hireDate){
 document.getElementById('f-hire')?.addEventListener('change',function(){ _updateBalanceFields(this.value); });
 
 // EXIT (resign / terminate)
+const EXIT_REASONS = {
+  'resigned': ['Own Project / Entrepreneurship','Salary & Better Opportunities','Personal Issues','Health Issues','Marriage / Relocation','Career Change','Other'],
+  'terminated-behaviour': ['Misconduct','Repeated Absenteeism','Insubordination','Harassment / Workplace Violation','Policy Breach','Other Behavioural Issue'],
+  'terminated-performance': ['Failure to Meet KPIs','Persistent Underperformance','Failed Probation','Skills Mismatch','Other Performance Issue'],
+  'terminated-contract': ['Fixed-Term Contract Ended','Project Completion','Budget / Headcount Reduction','Role Abolished'],
+  'terminated': ['Mutual Agreement','Other']
+};
+function updateExitReasons(){
+  const type = document.getElementById('exit-type').value;
+  const sel  = document.getElementById('exit-reason');
+  const opts = EXIT_REASONS[type] || EXIT_REASONS['terminated'];
+  sel.innerHTML = opts.map(o=>`<option>${o}</option>`).join('');
+}
 function openExit(uid){
   exitUID = uid;
   const p = PLANNERS.find(x=>x.uid===uid);
   document.getElementById('exit-modal-title').textContent = `Register Exit — ${p?.firstName||''} ${p?.lastName||''}`;
+  document.getElementById('exit-type').value = 'resigned';
   document.getElementById('exit-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('exit-notes').value='';
+  updateExitReasons();
   openModal('modal-exit');
 }
 async function saveExit(){
   if(!exitUID) return;
   const p = PLANNERS.find(x=>x.uid===exitUID);
   if(!p){ toast('Not found','err'); return; }
-  const type   = document.getElementById('exit-type').value;
+  const exitTypeRaw = document.getElementById('exit-type').value;
+  // Normalize: all terminated-* variants → status 'terminated', keep sub-type as terminationCategory
+  const isTermination = exitTypeRaw.startsWith('terminated');
+  const status = isTermination ? 'terminated' : 'resigned';
+  const terminationCategory = isTermination ? exitTypeRaw : null; // e.g. 'terminated-behaviour'
   const date   = document.getElementById('exit-date').value;
   const reason = document.getElementById('exit-reason').value;
   const notes  = document.getElementById('exit-notes').value.trim();
   // Build history event
   const exitEvent = {
-    type: type, // 'resigned' or 'terminated'
+    type: status,
+    ...(terminationCategory && {terminationCategory}),
     date: date,
     reason: reason,
     notes: notes,
@@ -1544,14 +1557,20 @@ async function saveExit(){
   history.push(exitEvent);
   try{
     await db.collection('planners').doc(p._id).update({
-      status: type,
+      status: status,
+      ...(terminationCategory && {terminationCategory}),
       exitDate: date,
       exitReason: reason,
       exitNotes: notes,
       exitYear: date ? parseInt(date.split('-')[0]) : new Date().getFullYear(),
       history: history,
     });
-    toast(`${type==='resigned'?'Resignation':'Termination'} registered ✓`);
+    const label = exitTypeRaw==='resigned' ? 'Resignation'
+      : exitTypeRaw==='terminated-behaviour' ? 'Termination (Behavioural)'
+      : exitTypeRaw==='terminated-performance' ? 'Termination (Performance)'
+      : exitTypeRaw==='terminated-contract' ? 'Termination (Contract End)'
+      : 'Termination';
+    toast(`${label} registered ✓`);
     closeModal('modal-exit');
     await loadPlanners();
     renderPlanners();
@@ -1625,6 +1644,7 @@ async function savePromotion(){
     closeModal('modal-promote');
     await loadPlanners();
     renderPlanners();
+    renderTurnaround();
   } catch(e){ toast(e.message,'err'); }
 }
 
@@ -2199,24 +2219,40 @@ function renderTurnaround(){
 
   // Events per month: hired/resigned/terminated/promoted — based on history array
   // role: 'ops' = Operations Planner, 'sup' = Planning Supervisor
+  function isOpsPos(pos){ const p=(pos||'').toLowerCase(); return p.includes('operations planner')||p.includes('ops planner'); }
+  function isSupPos(pos){ return (pos||'').toLowerCase().includes('supervisor'); }
   function eventsInMonth(y,m,role){
     const ev={hired:0,resigned:0,terminated:0,promoted:0};
     const yStr=String(y);
     const mStr=String(m+1).padStart(2,'0');
     const prefix=`${yStr}-${mStr}`;
     PLANNERS.forEach(p=>{
-      // Filter by current position for the role
-      const pos=(p.position||'').toLowerCase();
-      const isOps=pos.includes('operations planner')||pos.includes('ops planner');
-      const isSup=pos.includes('supervisor');
-      if(role==='ops'&&!isOps) return;
-      if(role==='sup'&&!isSup) return;
+      const curPos=(p.position||'');
       (p.history||[]).forEach(h=>{
-        if((h.date||'').startsWith(prefix)){
-          if(h.type==='hired') ev.hired++;
-          else if(h.type==='resigned') ev.resigned++;
-          else if(h.type==='terminated') ev.terminated++;
-          else if(h.type==='promoted') ev.promoted++;
+        if(!(h.date||'').startsWith(prefix)) return;
+        if(h.type==='hired'){
+          // Count hire in the pool matching the position at hire time (use toPosition or current)
+          const hirePos=h.position||h.toPosition||curPos;
+          if(role==='ops'&&isOpsPos(hirePos)) ev.hired++;
+          if(role==='sup'&&isSupPos(hirePos)) ev.hired++;
+        } else if(h.type==='resigned'){
+          // Count in pool they resigned from (fromPosition or current)
+          const fromPos=h.fromPosition||curPos;
+          if(role==='ops'&&isOpsPos(fromPos)) ev.resigned++;
+          if(role==='sup'&&isSupPos(fromPos)) ev.resigned++;
+        } else if(h.type==='terminated'){
+          const fromPos=h.fromPosition||curPos;
+          if(role==='ops'&&isOpsPos(fromPos)) ev.terminated++;
+          if(role==='sup'&&isSupPos(fromPos)) ev.terminated++;
+        } else if(h.type==='promoted'){
+          const from=h.fromPosition||'';
+          const to=h.toPosition||curPos;
+          // For OPS: promoted OUT (from ops to something else → counts as promoted in ops)
+          if(role==='ops'&&isOpsPos(from)) ev.promoted++;
+          // For SUP: promoted IN from ops → counts as "hired" entry for supervisors
+          if(role==='sup'&&isSupPos(to)&&!isSupPos(from)) ev.hired++;
+          // For SUP: promoted within or out of sup pool
+          if(role==='sup'&&isSupPos(from)&&isSupPos(to)) ev.promoted++;
         }
       });
     });
@@ -2633,6 +2669,13 @@ async function applyTeamsImport(){
   const toWrite=[..._teamsQueue];
   _teamsConflicts.filter(c=>c.choice==='use').forEach(c=>toWrite.push({uid:c.uid,date:c.date,code:c.code}));
   if(!toWrite.length){toast('Nothing to save','warn');return;}
+  const conflictsUsed=_teamsConflicts.filter(c=>c.choice==='use').length;
+  const conflictsKept=_teamsConflicts.filter(c=>c.choice==='keep').length;
+  const unresolved=_teamsConflicts.filter(c=>!c.choice).length;
+  if(unresolved>0){toast(`Please resolve all conflicts first (${unresolved} remaining)`,'warn');return;}
+  const msg=`You are about to save ${toWrite.length} shift${toWrite.length!==1?'s':''} to the database.`
+    +(conflictsUsed||conflictsKept?`\n\nConflicts: ${conflictsUsed} resolved using uploaded · ${conflictsKept} kept existing`:'');
+  if(!confirm(msg+'\n\nProceed?')) return;
   _showUploadBusy('teams-busy',`Saving ${toWrite.length} shifts to Firestore …`);
   try{
     const batch=db.batch();
@@ -2831,6 +2874,13 @@ async function applyHistoryImport(){
   const toWrite=[..._histQueue];
   _histConflicts.filter(c=>c.choice==='use').forEach(c=>toWrite.push({uid:c.uid,date:c.date,code:c.code}));
   if(!toWrite.length){toast('Nothing to save','warn');return;}
+  const conflictsUsed=_histConflicts.filter(c=>c.choice==='use').length;
+  const conflictsKept=_histConflicts.filter(c=>c.choice==='keep').length;
+  const unresolved=_histConflicts.filter(c=>!c.choice).length;
+  if(unresolved>0){toast(`Please resolve all conflicts first (${unresolved} remaining)`,'warn');return;}
+  const msg=`You are about to save ${toWrite.length} shift${toWrite.length!==1?'s':''} to the database.`
+    +(conflictsUsed||conflictsKept?`\n\nConflicts: ${conflictsUsed} resolved using uploaded · ${conflictsKept} kept existing`:'');
+  if(!confirm(msg+'\n\nProceed?')) return;
   const busyEl=document.getElementById('hist-busy');
   if(busyEl){busyEl.style.display='block';busyEl.innerHTML='<span style="animation:spin 1s linear infinite;display:inline-block;margin-right:6px">⏳</span>Saving '+toWrite.length+' shifts …';}
   try{
