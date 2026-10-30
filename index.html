@@ -2264,33 +2264,19 @@ function renderTurnaround(){
   }
 
   // Get the employee's position AS OF the last day of month m in year y
-  // by replaying promotions chronologically up to that date
+  // Strategy: sort ALL promotion history events. Start from the fromPosition
+  // of the very first promotion ever recorded. Then apply each promotion
+  // whose date falls on or before the last day of this month.
   function positionAtMonth(p, y, m){
-    const lastDay=new Date(y,m+1,0); // last day of month
-    const lastDayStr=lastDay.toISOString().split('T')[0];
-    // Start from the hire position (earliest known)
-    let pos = p.position || '';
-    // Find all promotions sorted by date, apply only those BEFORE end of month
-    const promotions = (p.history||[])
-      .filter(h=>h.type==='promoted' && h.date && h.date<=lastDayStr)
+    const lastDayStr = new Date(y,m+1,0).toISOString().split('T')[0];
+    const allProms = (p.history||[])
+      .filter(h=>h.type==='promoted' && h.date && h.fromPosition && h.toPosition)
       .sort((a,b)=>a.date.localeCompare(b.date));
-    if(promotions.length){
-      // Walk back to find earliest known position before any promotions
-      const firstProm = promotions[0];
-      pos = firstProm.fromPosition || pos;
-      // Apply all promotions up to this month
-      promotions.forEach(h=>{ pos = h.toPosition || pos; });
-    } else {
-      // No promotions before this month — use hire position if available
-      // (current position may be after a future promotion, so walk back)
-      const allPromotions = (p.history||[])
-        .filter(h=>h.type==='promoted' && h.date)
-        .sort((a,b)=>a.date.localeCompare(b.date));
-      if(allPromotions.length && allPromotions[0].date > lastDayStr){
-        // All promotions are in the future relative to this month
-        pos = allPromotions[0].fromPosition || pos;
-      }
-    }
+    if(!allProms.length) return p.position||'';
+    // Start from the position before any promotion ever happened
+    let pos = allProms[0].fromPosition;
+    // Apply each promotion that happened on or before end of this month
+    allProms.forEach(h=>{ if(h.date<=lastDayStr) pos=h.toPosition; });
     return pos;
   }
 
